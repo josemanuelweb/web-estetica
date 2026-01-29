@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="refresh" content="30">
+    <title>Panel de Administración - PRO Estética</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Gestión de Turnos</h1>
+            <p>Listado de citas recibidas (Actualización automática)</p>
+        </header>
+
+        <table style="width:100%; border-collapse: collapse; margin-top: 20px; background: white;">
+            <thead>
+                <tr style="border-bottom: 2px solid #d4af37;">
+                    <th style="padding: 15px; text-align: left;">Cliente</th>
+                    <th style="padding: 15px; text-align: left;">Servicio</th>
+                    <th style="padding: 15px; text-align: left;">Fecha y Hora</th>
+                    <th style="padding: 15px; text-align: left;">Acción</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-turnos">
+                {% for t in turnos %}
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 15px;">{{ t.nombre }}</td>
+                    <td style="padding: 15px;">{{ t.servicio }}</td>
+                    <td style="padding: 15px;">{{ t.fecha_cita.strftime('%d/%m/%Y %H:%M') }}</td>
+                    <td style="padding: 15px;">
+                        <a href="{{ url_for('finalizar', id=t.id) }}" 
+                        onclick="return confirm('¿Confirmas que el servicio fue realizado?')"
+                        style="color: #e74c3c; text-decoration: none; font-weight: bold;">
+                        ✖ Finalizar
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <div style="margin-top: 30px; text-align: center;">
+            <a href="/" class="btn">Volver al Inicio</a>
+        </div>
+    </div>
+
+    <script>
+        let cantidadInicial = parseInt("{{ turnos|length }}");
+
+        setInterval(function() {
+            fetch('/api/turnos')
+                .then(response => response.json())
+                .then(data => {
+                    // Si el número de turnos en la base de datos cambió, refrescamos la pantalla
+                    if (data.turnos.length !== cantidadInicial) {
+                        location.reload();
+                    }
+                });
+        }, 5000); // Revisa cada 5 segundos
+    </script>
+</body>
+</html>

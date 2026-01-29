@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PRO Estética & Masajes</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <header>
+        <h1>PRO Estética & Masajes</h1>
+        <p>Cuidarte no es un lujo, es una forma de quererte</p>
+    </header>
+
+    <div class="container">
+        <div class="servicios-grid">
+            {% for servicio in servicios %}
+            <div class="card">
+                <h3>{{ servicio.nombre }}</h3>
+                <p class="precio">${{ servicio.precio }}</p>
+                <a href="/turnos" class="btn">Reservar Turno</a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script>
+        // Seleccionamos todos los mensajes de alerta
+        setTimeout(function() {
+            let alerts = document.querySelectorAll('.alert-message');
+            alerts.forEach(function(alert) {
+                alert.style.display = 'none';
+            });
+        }, 3000); // 3000 milisegundos = 3 segundos
+    </script>
+</body>
+</html>
