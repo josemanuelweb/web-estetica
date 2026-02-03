@@ -47,7 +47,7 @@ def turnos():
             db.session.commit()
             
             # Número del dueño (Cambiá las X por el número real)
-            numero_wa = "5491123869037" 
+            numero_wa = "5491151023354" 
             mensaje = f"Hola! Soy {nombre}. Reservé: {servicio} para el {fecha_dt.strftime('%d/%m')} a las {fecha_dt.strftime('%H:%M')}hs."
             link_wa = f"https://wa.me/{numero_wa}?text={mensaje.replace(' ', '%20')}"
             
