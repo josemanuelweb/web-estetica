@@ -26,8 +26,8 @@ with app.app_context():
 @app.route('/')
 def index():
     sucursales = [
-        {'id': 1, 'nombre': 'Barrio nuñez', 'direccion': 'Montañeses 2830 1b, CABA'},
-        {'id': 2, 'nombre': 'Barrio villa urquiza', 'direccion': 'Monroe 5674 12b'}
+        {'id': 1, 'nombre': 'Barrio Nuñez', 'direccion': 'Montañeses 2830 1b, CABA'},
+        {'id': 2, 'nombre': 'Barrio Villa Urquiza', 'direccion': 'Monroe 5674 12b'}
     ]
     return render_template('index.html', sucursales=sucursales)
 
