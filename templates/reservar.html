@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Reservar Turno - Lógica Digital</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Reservar en {{ sucursal }}</h1>
+        <form action="/confirmar" method="POST">
+            <input type="hidden" name="sucursal" value="{{ sucursal }}">
+
+            <label>Selecciona el Servicio:</label>
+            <select name="servicio" required>
+                <option value="Masaje Relajante">Masaje Relajante (90 min)</option>
+                <option value="Masaje Descontracturante">Masaje Descontracturante (90 min)</option>
+                <option value="Limpieza Facial">Limpieza Facial (90 min)</option>
+            </select>
+
+            <label>Tu Nombre:</label>
+            <input type="text" name="nombre" placeholder="Ej: Jose Manuel" required>
+
+            <label>Fecha y Hora:</label>
+            <input type="datetime-local" name="fecha_cita" id="fecha_input" required>
+
+            <button type="submit" class="btn-reservar" style="border:none; cursor:pointer; width:100%;">Agendar Turno</button>
+        </form>
+        <br>
+        <a href="/" style="color: #8e735b; text-decoration: none;">← Volver a sucursales</a>
+    </div>
+</body>
+</html>
