@@ -1,63 +1,71 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="refresh" content="30">
-    <title>Panel de Administración - PRO Estética</title>
-    <link rel="stylesheet" href="/static/style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin - Turnos</title>
+  <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Gestión de Turnos</h1>
-            <p>Listado de citas recibidas (Actualización automática)</p>
-        </header>
-
-        <table style="width:100%; border-collapse: collapse; margin-top: 20px; background: white;">
-            <thead>
-                <tr style="border-bottom: 2px solid #d4af37;">
-                    <th style="padding: 15px; text-align: left;">Cliente</th>
-                    <th style="padding: 15px; text-align: left;">Servicio</th>
-                    <th style="padding: 15px; text-align: left;">Fecha y Hora</th>
-                    <th style="padding: 15px; text-align: left;">Acción</th>
-                </tr>
-            </thead>
-            <tbody id="tabla-turnos">
-                {% for t in turnos %}
-                <tr style="border-bottom: 1px solid #eee;">
-                    <td style="padding: 15px;">{{ t.nombre }}</td>
-                    <td style="padding: 15px;">{{ t.servicio }}</td>
-                    <td style="padding: 15px;">{{ t.fecha_cita.strftime('%d/%m/%Y %H:%M') }}</td>
-                    <td style="padding: 15px;">
-                        <a href="{{ url_for('finalizar', id=t.id) }}" 
-                        onclick="return confirm('¿Confirmas que el servicio fue realizado?')"
-                        style="color: #e74c3c; text-decoration: none; font-weight: bold;">
-                        ✖ Finalizar
-                        </a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        
-        <div style="margin-top: 30px; text-align: center;">
-            <a href="/" class="btn">Volver al Inicio</a>
-        </div>
+  <div class="admin-container">
+    <div class="page-header">
+      <h1>Panel Admin</h1>
+      <p class="subtitle">Gestión de turnos, servicios y exportación</p>
     </div>
 
-    <script>
-        let cantidadInicial = parseInt("{{ turnos|length }}");
+    <!-- Barra de acciones -->
+    <div class="admin-card" style="margin-bottom:14px;">
+      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+        <a class="btn-reservar" href="/admin/servicios">Servicios</a>
+        <a class="btn-reservar" href="/admin/opciones">Precios / Opciones</a>
+        <a class="btn-reservar" href="/admin/export/turnos.csv">Exportar CSV</a>
 
-        setInterval(function() {
-            fetch('/api/turnos')
-                .then(response => response.json())
-                .then(data => {
-                    // Si el número de turnos en la base de datos cambió, refrescamos la pantalla
-                    if (data.turnos.length !== cantidadInicial) {
-                        location.reload();
-                    }
-                });
-        }, 5000); // Revisa cada 5 segundos
-    </script>
+        <div style="flex:1;"></div>
+
+        <a href="/" style="font-weight:800;">Volver al sitio</a>
+        <a href="/admin/logout" style="font-weight:800; color:#b3261e;">Cerrar sesión</a>
+      </div>
+    </div>
+
+    <!-- Tabla de turnos -->
+    <div class="admin-card">
+      <h3 style="margin-bottom:10px;">Turnos registrados</h3>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Cliente</th>
+              <th>Sucursal</th>
+              <th>Servicio</th>
+              <th>Inicio</th>
+              <th>Fin</th>
+              <th>Precio</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for t in turnos %}
+              <tr>
+                <td>{{ t.nombre }}</td>
+                <td>{{ t.sucursal }}</td>
+                <td>{{ t.servicio_nombre }} ({{ t.duracion }}m)</td>
+                <td>{{ t.inicio.strftime('%d/%m %H:%M') }}</td>
+                <td>{{ t.fin.strftime('%d/%m %H:%M') }}</td>
+                <td>${{ t.precio }}</td>
+              </tr>
+            {% else %}
+              <tr>
+                <td colspan="6">No hay turnos cargados todavía.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="notice" style="margin-top:14px;">
+        Tip: podés exportar todo a CSV y abrirlo en Excel/Sheets para reportes.
+      </div>
+    </div>
+  </div>
 </body>
 </html>

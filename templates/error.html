@@ -1,23 +1,18 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>Ups! Algo no salió bien - Lógica Digital</title>
-    <link rel="stylesheet" href="/static/style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Atención</title>
+  <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <div class="container" style="text-align: center; margin-top: 100px;">
-        <div class="sucursal-card">
-            <h1 style="color: #d9534f;">¡Atención!</h1>
-            <p style="font-size: 1.1em; color: #666; margin: 20px 0;">
-                {{ mensaje }}
-            </p>
-            <div style="margin-top: 30px;">
-                <a href="javascript:history.back()" class="btn-reservar" style="background-color: #8e735b;">
-                    ← Intentar de nuevo
-                </a>
-            </div>
-        </div>
+  <div class="container" style="max-width:720px;">
+    <div class="card" style="text-align:center;">
+      <div class="alert alert-error">¡Atención!</div>
+      <p class="subtitle" style="margin:14px 0 18px;">{{ mensaje }}</p>
+      <a href="javascript:history.back()" class="btn-reservar" style="background:#8e735b;">← Intentar de nuevo</a>
     </div>
+  </div>
 </body>
 </html>

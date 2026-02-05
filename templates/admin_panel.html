@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Panel Admin</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+  <div class="admin-shell">
+    <header class="admin-header">
+      <div>
+        <h1 class="admin-title">Panel Admin</h1>
+        <p class="admin-subtitle">Control de turnos, servicios y exportación</p>
+      </div>
+      <div class="admin-header-actions">
+        <a class="btn btn-ghost" href="/">Volver al sitio</a>
+        <a class="btn btn-danger" href="/admin/logout">Cerrar sesión</a>
+      </div>
+    </header>
+
+    <!-- KPIs (opcionales, si no tenés stats se ven igual prolijos) -->
+    <section class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Turnos (vista actual)</div>
+        <div class="kpi-value">{{ turnos|length }}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Sucursales en lista</div>
+        <div class="kpi-value">{{ sucursales|length }}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Servicios en lista</div>
+        <div class="kpi-value">{{ servicios|length }}</div>
+      </div>
+    </section>
+
+    <!-- Acciones rápidas -->
+    <section class="panel-card">
+      <div class="panel-head">
+        <h2>Acciones rápidas</h2>
+        <p>Gestioná catálogo y exportá datos</p>
+      </div>
+
+      <div class="actions-grid">
+        <a class="btn btn-primary" href="/admin/servicios">Servicios</a>
+        <a class="btn btn-primary" href="/admin/opciones">Precios / Opciones</a>
+
+        <a class="btn btn-primary"
+           href="/admin/export/turnos.csv?from={{ filtros['from'] }}&to={{ filtros['to'] }}&sucursal={{ filtros['sucursal'] }}&servicio={{ filtros['servicio'] }}">
+          Exportar CSV (filtrado)
+        </a>
+
+        <a class="btn btn-ghost" href="/admin">Limpiar filtros</a>
+      </div>
+    </section>
+
+    <!-- Filtros -->
+    <section class="panel-card">
+      <div class="panel-head">
+        <h2>Filtros</h2>
+        <p>Aplicá filtros para ver y exportar reportes</p>
+      </div>
+
+      <form class="filters-grid" method="GET" action="/admin">
+        <div class="field">
+          <label>Desde</label>
+          <input type="date" name="from" value="{{ filtros['from'] }}">
+        </div>
+
+        <div class="field">
+          <label>Hasta</label>
+          <input type="date" name="to" value="{{ filtros['to'] }}">
+        </div>
+
+        <div class="field">
+          <label>Sucursal</label>
+          <select name="sucursal">
+            <option value="">Todas</option>
+            {% for s in sucursales %}
+              <option value="{{ s }}" {% if filtros['sucursal']==s %}selected{% endif %}>{{ s }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Servicio</label>
+          <select name="servicio">
+            <option value="">Todos</option>
+            {% for sv in servicios %}
+              <option value="{{ sv }}" {% if filtros['servicio']==sv %}selected{% endif %}>{{ sv }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="filters-actions">
+          <button class="btn btn-primary" type="submit">Aplicar filtros</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Tabla -->
+    <section class="panel-card">
+      <div class="panel-head">
+        <h2>Turnos</h2>
+        <p>Listado de turnos según filtros actuales</p>
+      </div>
+
+      <div class="table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Cliente</th>
+              <th>Sucursal</th>
+              <th>Servicio</th>
+              <th>Inicio</th>
+              <th>Fin</th>
+              <th>Precio</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for t in turnos %}
+              <tr>
+                <td>{{ t.nombre }}</td>
+                <td>{{ t.sucursal }}</td>
+                <td>{{ t.servicio_nombre }} ({{ t.duracion }}m)</td>
+                <td>{{ t.inicio.strftime('%d/%m %H:%M') }}</td>
+                <td>{{ t.fin.strftime('%d/%m %H:%M') }}</td>
+                <td>${{ t.precio }}</td>
+              </tr>
+            {% else %}
+              <tr>
+                <td colspan="6" class="empty-row">No hay turnos para los filtros seleccionados.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="hint" style="text-align: center;">
+        Tip: usá filtros por fecha y exportá CSV para reportes en Excel/Sheets.
+      </div>
+    </section>
+
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin - Opciones</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="admin-container">
+    <div class="page-header">
+      <h1>Duraciones y precios</h1>
+      <p class="subtitle">Cada opción es (Servicio + Duración + Precio)</p>
+    </div>
+
+    <div class="admin-grid">
+      <div class="admin-card">
+        <h3>Agregar opción</h3>
+        <form method="POST">
+          <label>Servicio</label>
+          <select name="servicio_id" required>
+            {% for s in servicios %}
+              <option value="{{ s.id }}">{{ s.nombre }}</option>
+            {% endfor %}
+          </select>
+
+          <label>Duración (min)</label>
+          <input type="number" name="duracion" placeholder="Ej: 60" required>
+
+          <label>Precio</label>
+          <input type="number" name="precio" placeholder="Ej: 36000" required>
+
+          <label style="display:flex; gap:10px; align-items:center;">
+            <input type="checkbox" name="activo" checked>
+            Activo
+          </label>
+
+          <button type="submit" class="btn-pro">Guardar</button>
+        </form>
+
+        <div style="margin-top:14px;">
+          <a href="/admin">← Volver al panel</a>
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <h3>Opciones cargadas</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Servicio</th>
+                <th>Duración</th>
+                <th>Precio</th>
+                <th>Activo</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for o in opciones %}
+                <tr>
+                  <td>{{ o.servicio.nombre }}</td>
+                  <td>{{ o.duracion }} min</td>
+                  <td>${{ o.precio }}</td>
+                  <td>{{ "Sí" if o.activo else "No" }}</td>
+                </tr>
+              {% else %}
+                <tr><td colspan="4">No hay opciones</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Confirmación</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="confirm-bg" style="background-image:url('https://images.unsplash.com/photo-1540555700478-4be289fbecef?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');">
+
+  <div class="confirm-overlay">
+    <div class="confirm-box">
+      <h1>¡Casi listo, {{ nombre }}!</h1>
+      <p>Tu turno fue registrado para <strong>{{ inicio.strftime('%d/%m %H:%M') }}</strong> en <strong>{{ sucursal }}</strong>.</p>
+      <p>{{ servicio }} ({{ duracion }} min) — Precio: ${{ precio }}</p>
+
+      <div class="confirm-pay">
+        <p><strong>Seña obligatoria:</strong> ${{ monto_sena }}</p>
+        <p><strong>Alias MP:</strong> {{ alias }}</p>
+        <p><strong>Titular:</strong> {{ titular }}</p>
+        <p style="margin-top:6px;"><strong>Dirección:</strong> {{ direccion }}</p>
+      </div>
+
+      <p>Una vez realizado el pago, tocá el botón para enviar el comprobante por WhatsApp.</p>
+
+      <a class="btn btn-wa" href="{{ link }}" id="btn-finalizar" target="_blank">
+        ✅ ENVIAR COMPROBANTE POR WHATSAPP
+      </a>
+
+      <!-- <div style="margin-top:14px;">
+        <a href="/">Volver al inicio</a>
+      </div> -->
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('btn-finalizar').addEventListener('click', function() {
+      setTimeout(function() { window.location.href = "/"; }, 1000);
+    });
+  </script>
+
+</body>
+</html>

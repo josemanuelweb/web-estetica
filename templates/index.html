@@ -1,28 +1,41 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reserva - Lógica Digital</title>
-    <link rel="stylesheet" href="/static/style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PRO - Estética y Masajes</title>
+  <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
     <div class="container">
-        <h1>Selecciona una Sucursal</h1>
-        <p class="subtitle">Agenda tu servicio en el local más cercano</p>
 
-        {% for s in sucursales %}
-        <div class="sucursal-card">
-            <h3>{{ s.nombre }}</h3>
-            <p>{{ s.direccion }}</p>
-            <a href="/sucursal/{{ s.id }}" class="btn-reservar">Ver Servicios</a>
+        <div class="home-wrap">
+            <div class="page-header" style="text-align: center;">
+                <h1>PRO - Estética y Masajes</h1>
+                <p class="subtitle">Cuidamos de ti. Agenda tu servicio en el local más cercano</p>
+            </div>
+
+            {% for s in sucursales %}
+                <div class="sucursal-card">
+                <h3>{{ s.nombre }}</h3>
+                <p>{{ s.direccion }}</p>
+                <a href="/sucursal/{{ s.id }}" class="btn-reservar">Ver Servicios</a>
+                </div>
+            {% endfor %}
+
+            <div class="notice">
+                <strong>📌 Nota importante:</strong> Para confirmar la reserva se requiere una seña de <strong>$10.000</strong>.
+                Los precios publicados corresponden a pago en efectivo o transferencia. Pagos con tarjeta tienen recargo.
+            </div>
+
+            {% if session.get("is_admin") %}
+                <div style="margin-top:24px; text-align:center;">
+                    <a href="/admin" class="admin-link">Ir al panel admin</a>
+                </div>
+            {% endif %}
+
+
         </div>
-        {% endfor %}
-
-        <div style="background-color: #fcf4ec; color: #8e735b; padding: 15px; border-radius: 10px; margin-bottom: 25px; border: 1px dashed #d4a373;">
-            <strong>📌 Nota importante:</strong> Para validar y congelar tu reserva, se requiere el pago de una seña de <strong>$10.000</strong> (pesos).
-        </div>
-
     </div>
 </body>
 </html>

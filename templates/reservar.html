@@ -1,33 +1,211 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>Reservar Turno - Lógica Digital</title>
-    <link rel="stylesheet" href="/static/style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reservar Turno</title>
+  <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Reservar en {{ sucursal }}</h1>
-        <form action="/confirmar" method="POST">
-            <input type="hidden" name="sucursal" value="{{ sucursal }}">
 
-            <label>Selecciona el Servicio:</label>
-            <select name="servicio" required>
-                <option value="Masaje Relajante">Masaje Relajante (90 min)</option>
-                <option value="Masaje Descontracturante">Masaje Descontracturante (90 min)</option>
-                <option value="Limpieza Facial">Limpieza Facial (90 min)</option>
-            </select>
+  <div class="formulario-card">
+    <h1>Reservar en {{ sucursal }}</h1>
+    <p class="subtitle" style="margin-top:6px;">Horario: 09:30 a 20:00 — Turnos en el día: WhatsApp</p>
 
-            <label>Tu Nombre:</label>
-            <input type="text" name="nombre" placeholder="Ej: Jose Manuel" required>
+    <form action="/confirmar" method="POST" id="formReserva">
+      <label>Nombre y Apellido</label>
+      <input type="text" name="nombre" placeholder="Ej: Jose Manuel" required>
 
-            <label>Fecha y Hora:</label>
-            <input type="datetime-local" name="fecha_cita" id="fecha_input" required>
+      <label>Servicio</label>
+      <select name="opcion_id" id="opcion_id" required>
+        {% for o in opciones %}
+          <option value="{{ o.id }}">
+            {{ o.servicio.nombre }} — {{ o.duracion }} min — ${{ o.precio }}
+          </option>
+        {% endfor %}
+      </select>
 
-            <button type="submit" class="btn-reservar" style="border:none; cursor:pointer; width:100%;">Agendar Turno</button>
-        </form>
-        <br>
-        <a href="/" style="color: #8e735b; text-decoration: none;">← Volver a sucursales</a>
+      <input type="hidden" name="sucursal" id="sucursal" value="{{ sucursal }}">
+      <input type="hidden" name="direccion" value="{{ direccion }}">
+
+      <!-- Esto es lo que recibe el backend -->
+      <input type="hidden" name="fecha_cita" id="fecha_cita" required>
+
+      <label>Fecha</label>
+      <input type="date" id="fecha" required>
+
+      <label>Hora disponible</label>
+      <select id="hora" required disabled>
+        <option value="">Cargando...</option>
+      </select>
+
+      <div class="notice" id="estado" style="display:none;"></div>
+
+      <button type="submit" class="btn-pro" id="btnSubmit" disabled>Continuar a la Seña</button>
+    </form>
+
+    <div style="margin-top:14px;">
+      <a href="/">← Volver a sucursales</a>
     </div>
+  </div>
+
+<script>
+  const fechaEl = document.getElementById('fecha');
+  const horaEl = document.getElementById('hora');
+  const opcionEl = document.getElementById('opcion_id');
+  const sucursalEl = document.getElementById('sucursal');
+  const fechaCitaEl = document.getElementById('fecha_cita');
+  const estadoEl = document.getElementById('estado');
+  const btnSubmit = document.getElementById('btnSubmit');
+
+  function setEstado(msg, show=true){
+    estadoEl.style.display = show ? 'block' : 'none';
+    estadoEl.textContent = msg || '';
+  }
+
+  function resetHoras(msg){
+    horaEl.innerHTML = `<option value="">${msg}</option>`;
+    horaEl.disabled = true;
+    btnSubmit.disabled = true;
+    fechaCitaEl.value = '';
+  }
+
+  // --- Restaurar última opción elegida ---
+  (function restoreLastOption(){
+    const last = localStorage.getItem("last_opcion_id");
+    if (!last) return;
+    const exists = Array.from(opcionEl.options).some(opt => opt.value === last);
+    if (exists) opcionEl.value = last;
+  })();
+
+  // Carga slots desde el backend
+  async function cargarSlots(){
+    const date = fechaEl.value;
+    const opcion_id = opcionEl.value;
+    const sucursal = sucursalEl.value;
+
+    if (!opcion_id) {
+      resetHoras("Seleccioná un servicio");
+      setEstado("No hay servicios disponibles");
+      return;
+    }
+
+
+    if(!date){
+      resetHoras('Seleccioná una fecha');
+      return;
+    }
+
+    // BONUS: bloquear hoy o fechas pasadas (si intentan forzarlo)
+    if (fechaEl.value && fechaEl.min && fechaEl.value < fechaEl.min) {
+      fechaEl.value = "";
+      resetHoras("Seleccioná una fecha válida");
+      setEstado("Los turnos se agendan desde mañana. Para turnos en el día, consultá por WhatsApp.");
+      return;
+    }
+
+    resetHoras('Cargando horarios...');
+    setEstado('', false);
+
+    try{
+      const url = `/api/slots?date=${encodeURIComponent(date)}&sucursal=${encodeURIComponent(sucursal)}&opcion_id=${encodeURIComponent(opcion_id)}`;
+      const res = await fetch(url);
+      const data = await res.json();
+
+      if(!data.ok){
+        resetHoras('No disponible');
+        setEstado(data.error || 'No se pudo cargar disponibilidad');
+        return;
+      }
+
+      const slots = data.slots || [];
+      if(slots.length === 0){
+        resetHoras('Sin horarios disponibles');
+        setEstado('No hay horarios disponibles para esa fecha con esa duración. Probá otra fecha u opción.');
+        return;
+      }
+
+      horaEl.disabled = false;
+      horaEl.innerHTML =
+        `<option value="">Elegí un horario</option>` +
+        slots.map(h => `<option value="${h}">${h}</option>`).join('');
+
+      setEstado(`Se encontraron ${slots.length} horarios disponibles.`, true);
+
+      // ✅ Upgrade: restaurar última hora si sirve; si no, elegir la primera disponible
+      let chosen = null;
+
+      const lastHora = localStorage.getItem("last_hora");
+      if (lastHora) {
+        const exists = Array.from(horaEl.options).some(opt => opt.value === lastHora);
+        if (exists) chosen = lastHora;
+      }
+      if (!chosen && slots.length > 0) chosen = slots[0];
+
+      if (chosen) {
+        horaEl.value = chosen;
+
+        localStorage.setItem("last_hora", chosen);
+        localStorage.setItem("last_fecha", fechaEl.value);
+        localStorage.setItem("last_opcion_id", opcionEl.value);
+
+        fechaCitaEl.value = `${fechaEl.value}T${chosen}`;
+        btnSubmit.disabled = false;
+      }
+
+    }catch(e){
+      resetHoras('Error cargando');
+      setEstado('Error al cargar horarios. Intentá nuevamente.');
+    }
+  }
+
+  // listeners
+  fechaEl.addEventListener('change', cargarSlots);
+
+  opcionEl.addEventListener('change', () => {
+    localStorage.setItem("last_opcion_id", opcionEl.value);
+    cargarSlots();
+  });
+
+  horaEl.addEventListener('change', () => {
+    const d = fechaEl.value;
+    const h = horaEl.value;
+
+    localStorage.setItem("last_hora", h);
+    localStorage.setItem("last_fecha", d);
+
+    if(!d || !h){
+      btnSubmit.disabled = true;
+      fechaCitaEl.value = '';
+      return;
+    }
+
+    fechaCitaEl.value = `${d}T${h}`;
+    btnSubmit.disabled = false;
+  });
+
+  // --- init: min=mañana + autoseleccionar mañana + cargar slots ---
+  (function initDate(){
+    const now = new Date();
+    const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+
+    const yyyy = tomorrow.getFullYear();
+    const mm = String(tomorrow.getMonth() + 1).padStart(2, '0');
+    const dd = String(tomorrow.getDate()).padStart(2, '0');
+
+    const minDate = `${yyyy}-${mm}-${dd}`;
+    fechaEl.min = minDate;
+
+    const lastFecha = localStorage.getItem("last_fecha");
+    if (lastFecha && lastFecha >= minDate) {
+      fechaEl.value = lastFecha;
+    } else {
+      fechaEl.value = minDate;
+    }
+
+    cargarSlots();
+  })();
+</script>
+
 </body>
 </html>
