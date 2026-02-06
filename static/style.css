@@ -133,6 +133,17 @@ a:hover{ text-decoration: underline; }
   font-weight: 900;
 }
 
+.btn-whatsapp {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 14px 16px;
+  text-align: center;
+  white-space: normal; /* CLAVE */
+}
+
+
 /* Forms */
 .formulario-card{
   max-width: 520px;
@@ -624,3 +635,17 @@ tbody td{
   text-decoration: underline;
 }
 
+.card,
+.confirm-card,
+.ticket,
+.resumen {
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+@media (max-width: 480px) {
+  .btn-whatsapp {
+    font-size: 15px;
+    padding: 12px;
+  }
+}
