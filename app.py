@@ -68,6 +68,7 @@ class Turno(db.Model):
 
     inicio = db.Column(db.DateTime, nullable=False)
     fin = db.Column(db.DateTime, nullable=False)
+    observacion = db.Column(db.Text, nullable=True, default="")
 
     creado_en = db.Column(db.DateTime, default=datetime.now)
 
@@ -464,6 +465,15 @@ def admin_opciones():
 
     opciones = ServicioOpcion.query.join(Servicio).order_by(Servicio.nombre, ServicioOpcion.duracion).all()
     return render_template("admin_opciones.html", servicios=servicios, opciones=opciones)
+
+@app.route("/admin/turno/<int:turno_id>/observacion", methods=["POST"])
+@admin_required
+def admin_guardar_observacion(turno_id: int):
+    t = Turno.query.get_or_404(turno_id)
+    obs = (request.form.get("observacion") or "").strip()
+    t.observacion = obs
+    db.session.commit()
+    return redirect(url_for("admin_panel"))
 
 if __name__ == "__main__":
     app.run(debug=False, port=5001)

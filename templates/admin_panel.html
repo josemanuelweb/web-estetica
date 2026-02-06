@@ -115,8 +115,8 @@
               <th>Sucursal</th>
               <th>Servicio</th>
               <th>Inicio</th>
-              <th>Fin</th>
               <th>Precio</th>
+              <th>Observación</th>
             </tr>
           </thead>
           <tbody>
@@ -126,8 +126,15 @@
                 <td>{{ t.sucursal }}</td>
                 <td>{{ t.servicio_nombre }} ({{ t.duracion }}m)</td>
                 <td>{{ t.inicio.strftime('%d/%m %H:%M') }}</td>
-                <td>{{ t.fin.strftime('%d/%m %H:%M') }}</td>
                 <td>${{ t.precio }}</td>
+                <td style="min-width:260px;">
+                  <form method="POST" action="/admin/turno/{{ t.id }}/observacion" style="display:flex; gap:10px; align-items:flex-start;">
+                    <textarea name="observacion" class="textarea" rows="2" style="min-width:260px; flex:1;">{{ t.observacion or "" }}</textarea>
+                    <button type="submit" class="btn btn-primary" style="white-space:nowrap;">Guardar</button>
+                  </form>
+                </td>
+
+                <!-- <td class="muted small">—</td> -->
               </tr>
             {% else %}
               <tr>
