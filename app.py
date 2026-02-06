@@ -65,9 +65,9 @@ class Turno(db.Model):
     servicio_nombre = db.Column(db.String(120), nullable=False)
     duracion = db.Column(db.Integer, nullable=False)
     precio = db.Column(db.Integer, nullable=False)
-
     inicio = db.Column(db.DateTime, nullable=False)
     fin = db.Column(db.DateTime, nullable=False)
+    telefono = db.Column(db.String(30), nullable=False, default="")
     observacion = db.Column(db.Text, nullable=True, default="")
 
     creado_en = db.Column(db.DateTime, default=datetime.now)
@@ -228,6 +228,10 @@ def confirmar():
     opcion_id = request.form.get("opcion_id")
     fecha_str = request.form.get("fecha_cita")
 
+    telefono = (request.form.get("telefono") or "").strip()
+    if not telefono:
+        return render_template("error.html", mensaje="Falta el teléfono/WhatsApp.")
+
     if not nombre or not sucursal or not direccion or not opcion_id or not fecha_str:
         return render_template("error.html", mensaje="Faltan datos. Revisá el formulario.")
 
@@ -279,6 +283,7 @@ def confirmar():
     # Guardar turno
     t = Turno(
         nombre=nombre,
+        telefono=telefono,
         sucursal=sucursal,
         opcion_id=opcion.id,
         servicio_nombre=servicio_nombre,
@@ -330,13 +335,10 @@ def admin_login():
 
     return render_template("admin_login.html")
 
-
 @app.route("/admin/logout")
 def admin_logout():
     session.clear()
     return redirect(url_for("index"))
-
-
 
 @app.route("/admin")
 @admin_required
@@ -388,7 +390,6 @@ def admin_panel():
         }
     )
 
-
 @app.route("/admin/export/turnos.csv")
 @admin_required
 def export_turnos_csv():
@@ -421,9 +422,43 @@ def export_turnos_csv():
 
     turnos = q.order_by(Turno.inicio.asc()).all()
 
-    # ... (lo demás igual)
+    output = io.StringIO()
+    output.write('\ufeff')  # 👈 BOM UTF-8 para Excel
+    writer = csv.writer(output, delimiter=";")
 
+    # 🔹 Encabezado (agregamos telefono)
+    writer.writerow([
+        "ID",
+        "Cliente",
+        "Telefono",
+        "Sucursal",
+        "Servicio",
+        "Duracion (min)",
+        "Precio",
+        "Inicio"
+    ])
 
+    # 🔹 Filas
+    for t in turnos:
+        writer.writerow([
+            t.id,
+            t.nombre,
+            t.telefono,
+            t.sucursal,
+            t.servicio_nombre,
+            t.duracion,
+            t.precio,
+            t.inicio.strftime("%Y-%m-%d %H:%M"),
+        ])
+
+    csv_data = output.getvalue()
+    output.close()
+
+    return Response(
+        csv_data,
+        mimetype="text/csv; charset=utf-8",
+        headers={"Content-Disposition": "attachment; filename=turnos.csv"}
+    )
 
 @app.route("/admin/servicios", methods=["GET", "POST"])
 @admin_required

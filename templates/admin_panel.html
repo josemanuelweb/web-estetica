@@ -112,6 +112,7 @@
           <thead>
             <tr>
               <th>Cliente</th>
+              <th>Teléfono</th>
               <th>Sucursal</th>
               <th>Servicio</th>
               <th>Inicio</th>
@@ -123,6 +124,7 @@
             {% for t in turnos %}
               <tr>
                 <td>{{ t.nombre }}</td>
+                <td>{{ t.telefono }}</td>
                 <td>{{ t.sucursal }}</td>
                 <td>{{ t.servicio_nombre }} ({{ t.duracion }}m)</td>
                 <td>{{ t.inicio.strftime('%d/%m %H:%M') }}</td>
@@ -133,7 +135,6 @@
                     <button type="submit" class="btn btn-primary" style="white-space:nowrap;">Guardar</button>
                   </form>
                 </td>
-
                 <!-- <td class="muted small">—</td> -->
               </tr>
             {% else %}
