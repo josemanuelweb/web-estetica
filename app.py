@@ -1,15 +1,17 @@
 import os
 import csv
 import io
+import re
+import urllib.parse
 from flask import session
 from functools import wraps
 from flask import Response
-import urllib.parse
 from flask import jsonify
 from datetime import date as date_type
 from datetime import datetime, timedelta, time
 from flask import Flask, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import func
 
 print(">>> APP.PY CORRECTO CARGADO <<<")
 
@@ -36,8 +38,6 @@ def admin_required(f):
             return redirect(url_for("admin_login"))
         return f(*args, **kwargs)
     return wrapper
-
-
 
 # ======================
 # MODELOS
@@ -153,6 +153,8 @@ def _parse_ymd(s):
     except Exception:
         return None
 
+def normalizar_telefono(raw: str) -> str:
+    return re.sub(r"\D+", "", raw or "")
 
 @app.route("/api/slots")
 def api_slots():
@@ -343,76 +345,95 @@ def admin_logout():
 @app.route("/admin")
 @admin_required
 def admin_panel():
-    # Filtros por querystring
-    date_from = (request.args.get("from") or "").strip()   # YYYY-MM-DD
-    date_to = (request.args.get("to") or "").strip()       # YYYY-MM-DD
-    sucursal = (request.args.get("sucursal") or "").strip()
-    servicio = (request.args.get("servicio") or "").strip()
-
-    def parse_ymd(s):
-        try:
-            return datetime.strptime(s, "%Y-%m-%d")
-        except Exception:
-            return None
+    filtros = {
+        "from": request.args.get("from", ""),
+        "to": request.args.get("to", ""),
+        "sucursal": request.args.get("sucursal", ""),
+        "servicio": request.args.get("servicio", ""),
+        "cliente_id": request.args.get("cliente_id", ""),
+    }
 
     q = Turno.query
 
-    df = parse_ymd(date_from)
-    dt = parse_ymd(date_to)
+    # Filtro fechas
+    if filtros["from"]:
+        try:
+            df = datetime.strptime(filtros["from"], "%Y-%m-%d")
+            q = q.filter(Turno.inicio >= df)
+        except:
+            pass
 
-    if df:
-        q = q.filter(Turno.inicio >= df)
-    if dt:
-        q = q.filter(Turno.inicio < (dt + timedelta(days=1)))
+    if filtros["to"]:
+        try:
+            dt = datetime.strptime(filtros["to"], "%Y-%m-%d") + timedelta(days=1)
+            q = q.filter(Turno.inicio < dt)
+        except:
+            pass
 
-    if sucursal:
-        q = q.filter(Turno.sucursal == sucursal)
+    # Filtro sucursal
+    if filtros["sucursal"]:
+        q = q.filter(Turno.sucursal == filtros["sucursal"])
 
-    if servicio:
-        q = q.filter(Turno.servicio_nombre == servicio)
+    # Filtro servicio
+    if filtros["servicio"]:
+        q = q.filter(Turno.servicio_nombre == filtros["servicio"])
+
+    # Filtro cliente por teléfono
+    if filtros["cliente_id"]:
+        cid = normalizar_telefono(filtros["cliente_id"])
+        q = q.filter(Turno.telefono.contains(cid))
 
     turnos = q.order_by(Turno.inicio.desc()).all()
 
-    # Listas para los selects (solo valores existentes)
-    sucursales = [r[0] for r in db.session.query(Turno.sucursal).distinct().order_by(Turno.sucursal).all()]
-    servicios = [r[0] for r in db.session.query(Turno.servicio_nombre).distinct().order_by(Turno.servicio_nombre).all()]
+    # Conteo de visitas por teléfono
+    visitas_por_tel = {}
+    tels = {t.telefono for t in turnos if t.telefono}
+    if tels:
+        filas = (
+            db.session.query(Turno.telefono, func.count(Turno.id))
+            .filter(Turno.telefono.in_(list(tels)))
+            .group_by(Turno.telefono)
+            .all()
+        )
+        visitas_por_tel = {tel: cnt for tel, cnt in filas}
+
+    # Listas para filtros
+    sucursales = sorted({t.sucursal for t in Turno.query.all()})
+    servicios = sorted({t.servicio_nombre for t in Turno.query.all()})
 
     return render_template(
         "admin_panel.html",
         turnos=turnos,
+        filtros=filtros,
+        visitas_por_tel=visitas_por_tel,
         sucursales=sucursales,
-        servicios=servicios,
-        filtros={
-            "from": date_from,
-            "to": date_to,
-            "sucursal": sucursal,
-            "servicio": servicio
-        }
+        servicios=servicios
     )
 
 @app.route("/admin/export/turnos.csv")
 @admin_required
 def export_turnos_csv():
-    date_from = (request.args.get("from") or "").strip()
-    date_to = (request.args.get("to") or "").strip()
-    sucursal = (request.args.get("sucursal") or "").strip()
-    servicio = (request.args.get("servicio") or "").strip()
+    date_from = request.args.get("from", "")
+    date_to = request.args.get("to", "")
+    sucursal = request.args.get("sucursal", "")
+    servicio = request.args.get("servicio", "")
 
     q = Turno.query
 
-    def parse_ymd(s):
+    # Filtros de fecha
+    if date_from:
         try:
-            return datetime.strptime(s, "%Y-%m-%d")
-        except Exception:
-            return None
+            df = datetime.strptime(date_from, "%Y-%m-%d")
+            q = q.filter(Turno.inicio >= df)
+        except:
+            pass
 
-    df = parse_ymd(date_from)
-    dt = parse_ymd(date_to)
-
-    if df:
-        q = q.filter(Turno.inicio >= df)
-    if dt:
-        q = q.filter(Turno.inicio < (dt + timedelta(days=1)))
+    if date_to:
+        try:
+            dt = datetime.strptime(date_to, "%Y-%m-%d") + timedelta(days=1)
+            q = q.filter(Turno.inicio < dt)
+        except:
+            pass
 
     if sucursal:
         q = q.filter(Turno.sucursal == sucursal)
@@ -420,36 +441,59 @@ def export_turnos_csv():
     if servicio:
         q = q.filter(Turno.servicio_nombre == servicio)
 
-    turnos = q.order_by(Turno.inicio.asc()).all()
+    # Orden por ID
+    turnos = q.order_by(Turno.id.asc()).all()
 
+    # ---- Visitas globales por teléfono ----
+    tels = {t.telefono for t in turnos if t.telefono}
+    visitas_por_tel = {}
+    if tels:
+        filas = (
+            db.session.query(Turno.telefono, func.count(Turno.id))
+            .filter(Turno.telefono.in_(list(tels)))
+            .group_by(Turno.telefono)
+            .all()
+        )
+        visitas_por_tel = {tel: cnt for tel, cnt in filas}
+
+    # ---- Total facturado (sobre lo exportado) ----
+    total_facturado = sum(int(t.precio or 0) for t in turnos)
+
+    # Crear CSV con BOM UTF-8 (Excel-friendly)
     output = io.StringIO()
-    output.write('\ufeff')  # 👈 BOM UTF-8 para Excel
+    output.write("\ufeff")
     writer = csv.writer(output, delimiter=";")
 
-    # 🔹 Encabezado (agregamos telefono)
     writer.writerow([
-        "ID",
+        "ID Turno",
         "Cliente",
         "Telefono",
+        "Visitas cliente",
         "Sucursal",
         "Servicio",
         "Duracion (min)",
         "Precio",
-        "Inicio"
+        "Inicio",
+        "Observacion"
     ])
 
-    # 🔹 Filas
     for t in turnos:
         writer.writerow([
             t.id,
             t.nombre,
             t.telefono,
+            visitas_por_tel.get(t.telefono, 1),
             t.sucursal,
             t.servicio_nombre,
             t.duracion,
             t.precio,
-            t.inicio.strftime("%Y-%m-%d %H:%M"),
+            t.inicio.strftime("%d/%m/%Y %H:%M"),
+            (t.observacion or "")
         ])
+
+    # Fila resumen al final (se ve bien en Excel)
+    writer.writerow([])
+    writer.writerow(["", "", "", "", "", "", "TOTAL FACTURADO", total_facturado, "", ""])
 
     csv_data = output.getvalue()
     output.close()
