@@ -27,7 +27,7 @@ app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DB_PATH}"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 ADMIN_USER = os.getenv("ADMIN_USER", "admin")
-ADMIN_PASS = os.getenv("ADMIN_PASS", "admin123")  # cambiá esto en producción
+ADMIN_PASS = os.getenv("ADMIN_PASS", "josemanuel-c")  # cambiá esto en producción
 
 db = SQLAlchemy(app)
 
