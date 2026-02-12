@@ -116,7 +116,7 @@ SUCURSAL_MAP = {
 MONTO_SENA = 10000
 MP_ALIAS = "promasaje"
 MP_TITULAR = "Irene Blasina Martínez Peña"
-WHATSAPP_NUM = "5491151023354"
+WHATSAPP_NUM = "5491125427382"
 
 
 # ======================
