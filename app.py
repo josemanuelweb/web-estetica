@@ -104,18 +104,18 @@ def capacidad_sucursal(nombre: str) -> int:
 
 
 SUCURSALES = [
-    {"id": 1, "nombre": "Barrio Nuñez", "direccion": "Montañeses 2830 1b, CABA"},
-    {"id": 2, "nombre": "Barrio Villa Urquiza", "direccion": "Monroe 5674 12b"},
+    {"id": 1, "nombre": "Caballito", "direccion": "Lugar 2585"},
+    {"id": 2, "nombre": "Barrio ", "direccion": "Lugar 1234"},
 ]
 
 SUCURSAL_MAP = {
-    1: {"nombre": "Nuñez", "direccion": "Montañeses 2830 1b, CABA"},
-    2: {"nombre": "Villa Urquiza", "direccion": "Monroe 5674 12b"},
+    1: {"nombre": "Palermo", "direccion": "Lugar 1234, CABA"},
+    2: {"nombre": "Villa Urquiza", "direccion": "Lugar 1234"},
 }
 
 MONTO_SENA = 10000
-MP_ALIAS = "promasaje"
-MP_TITULAR = "Irene Blasina Martínez Peña"
+MP_ALIAS = "Masaje"
+MP_TITULAR = "Carmen Maria De La Concepción"
 WHATSAPP_NUM = "5491125427382"
 
 
