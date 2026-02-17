@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body class="admin-body">
-  
+
   <div class="container admin-wide"> 
     <div class="admin-shell">
       <header class="admin-header">
@@ -53,7 +53,7 @@
           <a class="btn btn-primary" href="/admin/export/resumen_clientes.csv">Resumen Clientes</a>
 
           <a class="btn btn-primary"
-            href="/admin/export/turnos.csv?from={{ filtros['from'] }}&to={{ filtros['to'] }}&sucursal={{ filtros['sucursal'] }}&servicio={{ filtros['servicio'] }}">
+            href="/admin/export/turnos.csv?from={{ filtros['from'] }}&to={{ filtros['to'] }}&sucursal={{ filtros['sucursal'] }}&servicio={{ filtros['servicio'] }}&cliente_id={{ filtros['cliente_id'] }}">
             Exportar CSV (filtrado)
           </a>
 

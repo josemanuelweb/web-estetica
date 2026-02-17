@@ -1,0 +1,23 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Flask instance and local databases
+instance/
+*.db
+
+# Environment and secrets
+.env
+.env.*
+clave.txt
+
+# OS/editor noise
+.DS_Store
+.vscode/
+.idea/

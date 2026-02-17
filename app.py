@@ -3,6 +3,7 @@ import csv
 import io
 import re
 import urllib.parse
+from zoneinfo import ZoneInfo
 from flask import session
 from functools import wraps
 from flask import Response
@@ -16,7 +17,7 @@ from sqlalchemy import func
 print(">>> APP.PY CORRECTO CARGADO <<<")
 
 app = Flask(__name__)
-app.secret_key = os.getenv("SECRET_KEY", "clave-temporal-cambiar-en-render")
+app.secret_key = os.getenv("SECRET_KEY") or os.urandom(32).hex()
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 INSTANCE_DIR = os.path.join(BASE_DIR, "instance")
@@ -27,7 +28,7 @@ app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DB_PATH}"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 ADMIN_USER = os.getenv("ADMIN_USER", "admin")
-ADMIN_PASS = os.getenv("ADMIN_PASS", "josemanuel-c")  # cambiá esto en producción
+ADMIN_PASS = os.getenv("ADMIN_PASS", "1234")
 
 db = SQLAlchemy(app)
 
@@ -87,6 +88,7 @@ with app.app_context():
 # ======================
 HORA_APERTURA = time(9, 30)
 HORA_CIERRE = time(20, 0)
+TZ_AR = ZoneInfo("America/Argentina/Buenos_Aires")
 
 # =======================
 # CAPACIDAD POR SUCURSAL
@@ -105,7 +107,7 @@ def capacidad_sucursal(nombre: str) -> int:
 
 SUCURSALES = [
     {"id": 1, "nombre": "Nuñez", "direccion": "Nuñez 0000"},
-    {"id": 2, "nombre": "Villa Urquiza ", "direccion": "Villa Urquiza 0000"},
+    {"id": 2, "nombre": "Villa Urquiza", "direccion": "Villa Urquiza 0000"},
 ]
 
 SUCURSAL_MAP = {
@@ -152,9 +154,26 @@ def _parse_ymd(s):
         return datetime.strptime(s, "%Y-%m-%d").date()
     except Exception:
         return None
+    
+def _parse_int(raw):
+    try: 
+        return int(raw)
+    except (TypeError, ValueError):
+        return None
+
+def ahora_local_naive():
+    return datetime.now(TZ_AR).replace(tzinfo=None)
 
 def normalizar_telefono(raw: str) -> str:
     return re.sub(r"\D+", "", raw or "")
+
+def hay_capacidad_para_turno(sucursal: str, inicio: datetime, fin: datetime) -> bool:
+    solapados = Turno.query.filter(
+        Turno.sucursal == sucursal,
+        Turno.fin > inicio,
+        Turno.inicio < fin
+    ).count()
+    return solapados < capacidad_sucursal(sucursal)
 
 @app.route("/api/slots")
 def api_slots():
@@ -170,7 +189,11 @@ def api_slots():
     if not d:
         return jsonify({"ok": False, "error": "Fecha inválida"}), 400
 
-    opcion = ServicioOpcion.query.get(int(opcion_id))
+    opcion_id_int = _parse_int(opcion_id)
+    if opcion_id_int is None:
+        return jsonify({"ok": False, "error": "Opción inválida"}), 400
+    
+    opcion = db.session.get(ServicioOpcion, opcion_id_int)
     if not opcion or not opcion.activo or not opcion.servicio.activo:
         return jsonify({"ok": False, "error": "Opción no disponible"}), 400
 
@@ -224,8 +247,8 @@ def api_slots():
 
 @app.route('/confirmar', methods=['POST'])
 def confirmar():
-    # 1. Ajuste de Hora Argentina (UTC-3 para Render)
-    ahora = datetime.now() - timedelta(hours=3)
+    # 1. Hora local de Argentina
+    ahora = ahora_local_naive()
     hora_actual = ahora.hour
 
     # 2. Bloqueo de Madrugada (23:00 a 06:00)
@@ -234,21 +257,40 @@ def confirmar():
         return render_template('error.html', mensaje=mensaje)
 
     # 3. Captura de Datos del Formulario
-    nombre = request.form.get('nombre')
-    telefono = request.form.get('telefono')
-    sucursal = request.form.get('sucursal')
-    direccion = request.form.get('direccion')
+    nombre = (request.form.get('nombre') or "").strip()
+    telefono = normalizar_telefono(request.form.get('telefono'))
+    sucursal = (request.form.get('sucursal') or "").strip()
+    direccion = (request.form.get('direccion') or "").strip()
     opcion_id = request.form.get('opcion_id')
     fecha_turno_str = request.form.get('fecha_cita')
 
     try:
-        # Definimos fecha_turno correctamente para que Pylance no se queje
-        fecha_turno = datetime.strptime(fecha_turno_str, '%Y-%m-%dT%H:%M')
-        opcion = ServicioOpcion.query.get(int(opcion_id))
+        if not nombre or not telefono or not sucursal or not opcion_id or not fecha_turno_str:
+            return render_template('error.html', mensaje="Faltan datos obligatorios.")
         
+        fecha_turno = datetime.strptime(fecha_turno_str, '%Y-%m-%dT%H:%M')
+        
+        opcion_id_int = _parse_int(opcion_id)
+        if opcion_id_int is None:
+            return render_template('error.html', mensaje="Servicio inválido.")
+    
+        opcion = db.session.get(ServicioOpcion, opcion_id_int)
+        if not opcion or not opcion.activo or not opcion.servicio.activo:
+            return render_template('error.html', mensaje="La opción seleccionada no está disponible.")
+
         # Validación de disponibilidad inmediata
         if fecha_turno < ahora:
             return render_template('error.html', mensaje="No podés elegir un horario que ya pasó.")
+
+        if fecha_turno.time() < HORA_APERTURA or fecha_turno.time() >= HORA_CIERRE:
+                return render_template('error.html', mensaje="El horario elegido está fuera del horario comercial.")
+    
+        fin_turno = fecha_turno + timedelta(minutes=opcion.duracion)
+        if fin_turno.time() > HORA_CIERRE:
+            return render_template('error.html', mensaje="El turno supera el horario de cierre.")
+        
+        if not hay_capacidad_para_turno(sucursal, fecha_turno, fin_turno):
+            return render_template('error.html', mensaje="Ese horario se ocupó recién. Elegí otro disponible.")
 
         # 4. GUARDAR EN BASE DE DATOS
         nuevo_turno = Turno(
@@ -259,8 +301,8 @@ def confirmar():
             servicio_nombre=opcion.servicio.nombre,
             duracion=opcion.duracion,
             precio=opcion.precio,
-            inicio=fecha_turno, # <--- Aquí ya está definida
-            fin=fecha_turno + timedelta(minutes=opcion.duracion)
+            inicio=fecha_turno,
+            fin=fin_turno
         )
         db.session.add(nuevo_turno)
         db.session.commit()
@@ -277,9 +319,10 @@ def confirmar():
                              alias=MP_ALIAS, titular=MP_TITULAR,
                              direccion=direccion, link=link_whatsapp)
 
-    except Exception as e:
+    except Exception:
+        app.logger.exception("Error al confirmar turno")
         db.session.rollback()
-        return render_template('error.html', mensaje=f"Error: {str(e)}")
+        return render_template('error.html', mensaje="Ocurrió un error al confirmar el turno.")
 
 # ======================
 # ADMIN (sin login, simple)
