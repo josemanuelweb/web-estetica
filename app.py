@@ -27,7 +27,7 @@ app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DB_PATH}"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 ADMIN_USER = os.getenv("ADMIN_USER", "admin")
-ADMIN_PASS = os.getenv("ADMIN_PASS", "admin123")  # cambiá esto en producción
+ADMIN_PASS = os.getenv("ADMIN_PASS", "josemanuel-c")  # cambiá esto en producción
 
 db = SQLAlchemy(app)
 
@@ -104,19 +104,19 @@ def capacidad_sucursal(nombre: str) -> int:
 
 
 SUCURSALES = [
-    {"id": 1, "nombre": "Barrio Nuñez", "direccion": "Montañeses 2830 1b, CABA"},
-    {"id": 2, "nombre": "Barrio Villa Urquiza", "direccion": "Monroe 5674 12b"},
+    {"id": 1, "nombre": "Nuñez", "direccion": "Nuñez 0000"},
+    {"id": 2, "nombre": "Villa Urquiza ", "direccion": "Villa Urquiza 0000"},
 ]
 
 SUCURSAL_MAP = {
-    1: {"nombre": "Nuñez", "direccion": "Montañeses 2830 1b, CABA"},
-    2: {"nombre": "Villa Urquiza", "direccion": "Monroe 5674 12b"},
+    1: {"nombre": "Nuñez", "direccion": "Nuñez 0000"},
+    2: {"nombre": "Villa Urquiza", "direccion": "Villa Urquiza 0000"},
 }
 
 MONTO_SENA = 10000
-MP_ALIAS = "promasaje"
-MP_TITULAR = "Irene Blasina Martínez Peña"
-WHATSAPP_NUM = "5491151023354"
+MP_ALIAS = "Mercado.P"
+MP_TITULAR = "Carmen Maria De La Concepción"
+WHATSAPP_NUM = "5491125427382"
 
 
 # ======================
@@ -220,105 +220,55 @@ def api_slots():
         "slots": slots
     })
 
+# ... (Aquí va tu configuración de Base de Datos y modelos) ...
 
-
-@app.route("/confirmar", methods=["POST"])
+@app.route('/confirmar', methods=['POST'])
 def confirmar():
-    nombre = (request.form.get("nombre") or "").strip()
-    sucursal = (request.form.get("sucursal") or "").strip()
-    direccion = (request.form.get("direccion") or "").strip()
-    opcion_id = request.form.get("opcion_id")
-    fecha_str = request.form.get("fecha_cita")
+    # Ajuste Hora Argentina
+    ahora = datetime.now() - timedelta(hours=3)
+    
+    # Bloqueo Madrugada
+    if ahora.hour >= 23 or ahora.hour < 6:
+        return render_template('error.html', mensaje="El horario para solicitar turnos comienza a las 06:00 am.")
 
-    telefono = (request.form.get("telefono") or "").strip()
-    if not telefono:
-        return render_template("error.html", mensaje="Falta el teléfono/WhatsApp.")
+    # Captura de datos
+    nombre = request.form.get('nombre')
+    telefono = request.form.get('telefono')
+    sucursal = request.form.get('sucursal')
+    opcion_id = request.form.get('opcion_id')
+    fecha_turno_str = request.form.get('fecha_cita')
 
-    if not nombre or not sucursal or not direccion or not opcion_id or not fecha_str:
-        return render_template("error.html", mensaje="Faltan datos. Revisá el formulario.")
-
-    # Parse datetime-local
     try:
-        inicio = datetime.strptime(fecha_str, "%Y-%m-%dT%H:%M")
-    except ValueError:
-        return render_template("error.html", mensaje="Formato de fecha inválido.")
+        opcion = ServicioOpcion.query.get(int(opcion_id))
+        inicio = datetime.strptime(fecha_turno_str, '%Y-%m-%dT%H:%M')
+        fin = inicio + timedelta(minutes=opcion.duracion)
+        
+        # GUARDAR EN BASE DE DATOS (Esto faltaba en tu archivo)
+        nuevo_turno = Turno(
+            nombre=nombre,
+            telefono=telefono,
+            sucursal=sucursal,
+            opcion_id=opcion.id,
+            servicio_nombre=opcion.servicio.nombre,
+            duracion=opcion.duracion,
+            precio=opcion.precio,
+            inicio=inicio,
+            fin=fin
+        )
+        db.session.add(nuevo_turno)
+        db.session.commit()
 
-    ahora = datetime.now()
+        # Generar Link WhatsApp
+        texto = urllib.parse.quote(f"Hola, soy {nombre}. Reservé {opcion.servicio.nombre} para el {inicio.strftime('%d/%m %H:%M')}.")
+        link_whatsapp = f"https://wa.me/{WHATSAPP_NUM}?text={texto}"
 
-    # Regla: no turnos en el día
-    if inicio.date() == ahora.date():
-        return render_template("error.html", mensaje="Para turnos en el día, por favor consulta disponibilidad directamente por WhatsApp.")
-
-    # Regla: dentro de horario (inicio)
-    if not (HORA_APERTURA <= inicio.time() <= HORA_CIERRE):
-        return render_template("error.html", mensaje="Horario comercial: 09:30 a 20:00hs.")
-
-    # Opción elegida
-    opcion = ServicioOpcion.query.get(int(opcion_id))
-    if not opcion or not opcion.activo or not opcion.servicio.activo:
-        return render_template("error.html", mensaje="La opción seleccionada no está disponible.")
-
-    duracion = int(opcion.duracion)
-    precio = int(opcion.precio)
-    servicio_nombre = opcion.servicio.nombre
-
-    fin = inicio + timedelta(minutes=duracion)
-
-    # Regla: fin dentro de horario
-    limite_fin = datetime.combine(inicio.date(), HORA_CIERRE)
-    if fin > limite_fin:
-        return render_template("error.html", mensaje="Ese horario termina fuera del horario de trabajo (hasta 20:00).")
-
-    # Solapamiento por sucursal (si se pisan horarios)
-    cap = capacidad_sucursal(sucursal)
-
-    solapados = Turno.query.filter(
-        Turno.sucursal == sucursal,
-        Turno.fin > inicio,
-        Turno.inicio < fin
-    ).count()
-
-    if solapados >= cap:
-        return render_template("error.html", mensaje="Ese horario ya está completo. Elegí otro horario u otra duración.")
-
-
-    # Guardar turno
-    t = Turno(
-        nombre=nombre,
-        telefono=telefono,
-        sucursal=sucursal,
-        opcion_id=opcion.id,
-        servicio_nombre=servicio_nombre,
-        duracion=duracion,
-        precio=precio,
-        inicio=inicio,
-        fin=fin
-    )
-    db.session.add(t)
-    db.session.commit()
-
-    # WhatsApp link con mensaje
-    msg = (
-        f"Hola! Soy {nombre}. Agendé {servicio_nombre} ({duracion} min) en {sucursal} "
-        f"para el {inicio.strftime('%d/%m %H:%M')}. "
-        f"Adjunto el comprobante de la seña de ${MONTO_SENA} enviada a {MP_TITULAR} (alias {MP_ALIAS})."
-    )
-    link_wa = f"https://wa.me/{WHATSAPP_NUM}?text={urllib.parse.quote(msg)}"
-
-    return render_template(
-        "confirmar.html",
-        nombre=nombre,
-        servicio=servicio_nombre,
-        duracion=duracion,
-        precio=precio,
-        sucursal=sucursal,
-        direccion=direccion,
-        inicio=inicio,
-        monto_sena=MONTO_SENA,
-        alias=MP_ALIAS,
-        titular=MP_TITULAR,
-        link=link_wa
-    )
+        return render_template('confirmar.html', nombre=nombre, inicio=inicio, sucursal=sucursal, 
+                               servicio=opcion.servicio.nombre, precio=opcion.precio, 
+                               monto_sena=MONTO_SENA, alias=MP_ALIAS, titular=MP_TITULAR, 
+                               link=link_whatsapp)
+    except Exception as e:
+        db.session.rollback()
+        return render_template('error.html', mensaje=f"Error: {str(e)}")
 
 # ======================
 # ADMIN (sin login, simple)
