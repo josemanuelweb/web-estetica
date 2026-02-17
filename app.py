@@ -417,10 +417,10 @@ def export_turnos_csv():
     date_to = request.args.get("to", "")
     sucursal = request.args.get("sucursal", "")
     servicio = request.args.get("servicio", "")
+    cliente_id = request.args.get("cliente_id", "")
 
     q = Turno.query
 
-    # Filtros de fecha
     if date_from:
         try:
             df = datetime.strptime(date_from, "%Y-%m-%d")
@@ -441,10 +441,31 @@ def export_turnos_csv():
     if servicio:
         q = q.filter(Turno.servicio_nombre == servicio)
 
-    # Orden por ID
+    if cliente_id:
+        cid = normalizar_telefono(cliente_id)
+        q = q.filter(Turno.telefono.contains(cid))
+
     turnos = q.order_by(Turno.id.asc()).all()
 
-    # ---- Visitas globales por teléfono ----
+    output = io.StringIO()
+    output.write("\ufeff")  # BOM UTF-8 (Excel)
+    writer = csv.writer(output, delimiter=";")
+
+    # Orden EXACTO que pediste
+    writer.writerow([
+        "ID Turno",
+        "Inicio",
+        "Cliente",
+        "Teléfono",
+        "Sucursal",
+        "Servicio",
+        "Visitas",
+        "Duración (min)",
+        "Precio",
+        "Observación"
+    ])
+
+    # Visitas globales (por teléfono) para los teléfonos presentes en el reporte
     tels = {t.telefono for t in turnos if t.telefono}
     visitas_por_tel = {}
     if tels:
@@ -456,44 +477,19 @@ def export_turnos_csv():
         )
         visitas_por_tel = {tel: cnt for tel, cnt in filas}
 
-    # ---- Total facturado (sobre lo exportado) ----
-    total_facturado = sum(int(t.precio or 0) for t in turnos)
-
-    # Crear CSV con BOM UTF-8 (Excel-friendly)
-    output = io.StringIO()
-    output.write("\ufeff")
-    writer = csv.writer(output, delimiter=";")
-
-    writer.writerow([
-        "ID Turno",
-        "Cliente",
-        "Telefono",
-        "Visitas cliente",
-        "Sucursal",
-        "Servicio",
-        "Duracion (min)",
-        "Precio",
-        "Inicio",
-        "Observacion"
-    ])
-
     for t in turnos:
         writer.writerow([
             t.id,
+            t.inicio.strftime("%d/%m/%Y %H:%M"),
             t.nombre,
             t.telefono,
-            visitas_por_tel.get(t.telefono, 1),
             t.sucursal,
             t.servicio_nombre,
+            visitas_por_tel.get(t.telefono, 1),
             t.duracion,
             t.precio,
-            t.inicio.strftime("%d/%m/%Y %H:%M"),
             (t.observacion or "")
         ])
-
-    # Fila resumen al final (se ve bien en Excel)
-    writer.writerow([])
-    writer.writerow(["", "", "", "", "", "", "TOTAL FACTURADO", total_facturado, "", ""])
 
     csv_data = output.getvalue()
     output.close()
@@ -503,6 +499,85 @@ def export_turnos_csv():
         mimetype="text/csv; charset=utf-8",
         headers={"Content-Disposition": "attachment; filename=turnos.csv"}
     )
+
+@app.route("/admin/export/resumen_sucursal.csv")
+@admin_required
+def export_resumen_sucursal_csv():
+    turnos = Turno.query.order_by(Turno.id.asc()).all()
+
+    resumen = {}
+    for t in turnos:
+        r = resumen.setdefault(t.sucursal, {"cantidad": 0, "total": 0})
+        r["cantidad"] += 1
+        r["total"] += int(t.precio or 0)
+
+    output = io.StringIO()
+    output.write("\ufeff")
+    writer = csv.writer(output, delimiter=";")
+    writer.writerow(["Sucursal", "Cantidad turnos", "Total $"])
+
+    for s, data in sorted(resumen.items()):
+        writer.writerow([s, data["cantidad"], data["total"]])
+
+    csv_data = output.getvalue()
+    output.close()
+
+    return Response(csv_data, mimetype="text/csv; charset=utf-8",
+    headers={"Content-Disposition": "attachment; filename=resumen_sucursal.csv"})
+
+@app.route("/admin/export/resumen_servicio.csv")
+@admin_required
+def export_resumen_servicio_csv():
+    turnos = Turno.query.order_by(Turno.id.asc()).all()
+
+    resumen = {}
+    for t in turnos:
+        r = resumen.setdefault(t.servicio_nombre, {"cantidad": 0, "total": 0})
+        r["cantidad"] += 1
+        r["total"] += int(t.precio or 0)
+
+    output = io.StringIO()
+    output.write("\ufeff")
+    writer = csv.writer(output, delimiter=";")
+    writer.writerow(["Servicio", "Cantidad turnos", "Total $"])
+
+    for sv, data in sorted(resumen.items()):
+        writer.writerow([sv, data["cantidad"], data["total"]])
+
+    csv_data = output.getvalue()
+    output.close()
+
+    return Response(csv_data, mimetype="text/csv; charset=utf-8",
+    headers={"Content-Disposition": "attachment; filename=resumen_servicio.csv"})
+
+@app.route("/admin/export/resumen_clientes.csv")
+@admin_required
+def export_resumen_clientes_csv():
+    turnos = Turno.query.order_by(Turno.id.asc()).all()
+
+    resumen = {}
+    for t in turnos:
+        key = t.telefono or ""
+        r = resumen.setdefault(key, {"nombre": t.nombre, "cantidad": 0, "total": 0})
+        r["cantidad"] += 1
+        r["total"] += int(t.precio or 0)
+
+    output = io.StringIO()
+    output.write("\ufeff")
+    writer = csv.writer(output, delimiter=";")
+    writer.writerow(["Teléfono", "Nombre", "Cantidad turnos", "Total $"])
+
+    # orden por total desc
+    for tel, data in sorted(resumen.items(), key=lambda x: x[1]["total"], reverse=True):
+        writer.writerow([tel, data["nombre"], data["cantidad"], data["total"]])
+
+    csv_data = output.getvalue()
+    output.close()
+
+    return Response(csv_data, mimetype="text/csv; charset=utf-8",
+    headers={"Content-Disposition": "attachment; filename=resumen_clientes.csv"})
+
+
 
 @app.route("/admin/servicios", methods=["GET", "POST"])
 @admin_required
