@@ -224,26 +224,33 @@ def api_slots():
 
 @app.route('/confirmar', methods=['POST'])
 def confirmar():
-    # Ajuste Hora Argentina
+    # 1. Ajuste de Hora Argentina (UTC-3 para Render)
     ahora = datetime.now() - timedelta(hours=3)
-    
-    # Bloqueo Madrugada
-    if ahora.hour >= 23 or ahora.hour < 6:
-        return render_template('error.html', mensaje="El horario para solicitar turnos comienza a las 06:00 am.")
+    hora_actual = ahora.hour
 
-    # Captura de datos
+    # 2. Bloqueo de Madrugada (23:00 a 06:00)
+    if hora_actual >= 23 or hora_actual < 6:
+        mensaje = "El horario para solicitar turnos comienza a las 06:00 am. ¡Te esperamos pronto!"
+        return render_template('error.html', mensaje=mensaje)
+
+    # 3. Captura de Datos del Formulario
     nombre = request.form.get('nombre')
     telefono = request.form.get('telefono')
     sucursal = request.form.get('sucursal')
+    direccion = request.form.get('direccion')
     opcion_id = request.form.get('opcion_id')
     fecha_turno_str = request.form.get('fecha_cita')
 
     try:
+        # Definimos fecha_turno correctamente para que Pylance no se queje
+        fecha_turno = datetime.strptime(fecha_turno_str, '%Y-%m-%dT%H:%M')
         opcion = ServicioOpcion.query.get(int(opcion_id))
-        inicio = datetime.strptime(fecha_turno_str, '%Y-%m-%dT%H:%M')
-        fin = inicio + timedelta(minutes=opcion.duracion)
         
-        # GUARDAR EN BASE DE DATOS (Esto faltaba en tu archivo)
+        # Validación de disponibilidad inmediata
+        if fecha_turno < ahora:
+            return render_template('error.html', mensaje="No podés elegir un horario que ya pasó.")
+
+        # 4. GUARDAR EN BASE DE DATOS
         nuevo_turno = Turno(
             nombre=nombre,
             telefono=telefono,
@@ -252,20 +259,24 @@ def confirmar():
             servicio_nombre=opcion.servicio.nombre,
             duracion=opcion.duracion,
             precio=opcion.precio,
-            inicio=inicio,
-            fin=fin
+            inicio=fecha_turno, # <--- Aquí ya está definida
+            fin=fecha_turno + timedelta(minutes=opcion.duracion)
         )
         db.session.add(nuevo_turno)
         db.session.commit()
 
-        # Generar Link WhatsApp
-        texto = urllib.parse.quote(f"Hola, soy {nombre}. Reservé {opcion.servicio.nombre} para el {inicio.strftime('%d/%m %H:%M')}.")
-        link_whatsapp = f"https://wa.me/{WHATSAPP_NUM}?text={texto}"
+        # 5. Generar Link de WhatsApp
+        texto_wa = f"Hola, soy {nombre}. Reservé {opcion.servicio.nombre} para el {fecha_turno.strftime('%d/%m a las %H:%M')} en {sucursal}."
+        texto_enc = urllib.parse.quote(texto_wa)
+        link_whatsapp = f"https://wa.me/{WHATSAPP_NUM}?text={texto_enc}"
 
-        return render_template('confirmar.html', nombre=nombre, inicio=inicio, sucursal=sucursal, 
-                               servicio=opcion.servicio.nombre, precio=opcion.precio, 
-                               monto_sena=MONTO_SENA, alias=MP_ALIAS, titular=MP_TITULAR, 
-                               link=link_whatsapp)
+        return render_template('confirmar.html', 
+                             nombre=nombre, inicio=fecha_turno, sucursal=sucursal,
+                             servicio=opcion.servicio.nombre, duracion=opcion.duracion,
+                             precio=opcion.precio, monto_sena=MONTO_SENA,
+                             alias=MP_ALIAS, titular=MP_TITULAR,
+                             direccion=direccion, link=link_whatsapp)
+
     except Exception as e:
         db.session.rollback()
         return render_template('error.html', mensaje=f"Error: {str(e)}")
