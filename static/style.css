@@ -1,129 +1,538 @@
-/* =========================================
-   1. RESET Y CONFIGURACIÓN BASE
-   ========================================= */
-* { margin: 0; padding: 0; box-sizing: border-box; }
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap");
 
 :root {
-    --primary: #8e735b;
-    --bg-crema: #fdfaf8;
-    --border: #e9dccf;
-    --text: #444;
+  --primary: #8e735b;
+  --primary-dark: #725a46;
+  --danger: #b64141;
+  --bg: #f6f0ea;
+  --surface: #ffffff;
+  --surface-soft: #faf4ee;
+  --border: #e7dacd;
+  --text: #302922;
+  --muted: #74675a;
+  --radius-lg: 16px;
+  --radius-md: 12px;
+  --radius-sm: 10px;
+  --shadow: 0 10px 30px rgba(108, 81, 59, 0.14);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 body {
-    background-color: var(--bg-crema);
-    font-family: 'Montserrat', sans-serif;
-    color: var(--text);
-    line-height: 1.5;
+  min-height: 100vh;
+  background: radial-gradient(circle at 0 0, #fffaf4, var(--bg));
+  color: var(--text);
+  font-family: "Manrope", sans-serif;
+  line-height: 1.45;
 }
 
-/* =========================================
-   2. LÓGICA DE DISEÑO (CENTRADO VS ANCHO)
-   ========================================= */
-
-/* VISTA CLIENTE: Centrado para formularios y sucursales */
-body:not(.admin-body) {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    padding: 20px;
+h1,
+h2,
+h3,
+h4 {
+  font-family: "Cormorant Garamond", serif;
+  letter-spacing: 0.2px;
+  line-height: 1.1;
 }
 
-/* VISTA ADMIN: Ancho total para el panel */
+a {
+  color: var(--primary-dark);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Layout base */
+.container,
+.admin-container {
+  width: min(1200px, 94vw);
+  margin: 18px auto;
+}
+
+.formulario-card,
+.sucursal-card,
+.card,
+.confirm-box,
+.panel-card,
+.admin-card,
+.admin-header,
+.kpi-card {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 16px;
+}
+
+.formulario-card,
+.card {
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.home-wrap {
+  display: grid;
+  gap: 12px;
+}
+
+.subtitle,
+.admin-subtitle,
+.muted,
+.hint,
+.panel-head p,
+.kpi-label {
+  color: var(--muted);
+}
+
+.page-header {
+  margin-bottom: 10px;
+}
+
+.admin-title {
+  font-size: 2rem;
+  line-height: 1.1;
+}
+
+.admin-link {
+  display: inline-block;
+}
+
+.notice {
+  background: var(--surface-soft);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  font-size: 0.92rem;
+}
+
+.sucursal-card p {
+  margin: 4px 0 10px;
+}
+
+.sucursal-card {
+  text-align: center;
+}
+
+label {
+  display: block;
+  margin: 11px 0 6px;
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 11px;
+  font: inherit;
+  color: var(--text);
+  background: #fff;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: 2px solid rgba(142, 115, 91, 0.2);
+  border-color: var(--primary);
+}
+
+.textarea {
+  min-height: 56px;
+  resize: vertical;
+}
+
+/* Buttons */
+.btn,
+.btn-primary,
+.btn-danger,
+.btn-outline,
+.btn-pro,
+.btn-reservar,
+.btn-wa {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 14px;
+  border: 1px solid transparent;
+  text-decoration: none;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.2s ease;
+}
+
+.btn:hover,
+.btn-primary:hover,
+.btn-danger:hover,
+.btn-outline:hover,
+.btn-pro:hover,
+.btn-reservar:hover,
+.btn-wa:hover {
+  transform: translateY(-1px);
+  opacity: 0.95;
+  text-decoration: none;
+}
+
+.btn,
+.btn-primary,
+.btn-pro,
+.btn-reservar {
+  background: var(--primary);
+  color: #fff !important;
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: #fff !important;
+}
+
+.btn-outline {
+  background: #fff;
+  color: var(--primary-dark) !important;
+  border-color: var(--border);
+}
+
+.btn-wa {
+  background: #1ca65d;
+  color: #fff !important;
+}
+
+.btn-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Alerts */
+.alert {
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+}
+
+.alert-error {
+  background: #ffecec;
+  border: 1px solid #f4c4c4;
+  color: #7f2525;
+}
+
+/* Confirm */
+.confirm-bg {
+  background-size: cover;
+  background-position: center;
+}
+
+.confirm-overlay {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 14px;
+  background: rgba(38, 25, 13, 0.38);
+}
+
+.confirm-pay {
+  margin: 12px 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+}
+
+/* Admin */
 body.admin-body {
-    display: block; /* Anulamos el flex */
-    padding: 0;
+  padding: 0;
+  background: linear-gradient(180deg, #f7f0e8, #f2ebe3);
 }
 
-/* =========================================
-   3. CONTENEDORES
-   ========================================= */
-.container, .formulario-card, .sucursal-card, .admin-container {
-    background: white;
-    padding: 30px;
-    border-radius: 20px;
-    border: 1px solid var(--border);
-    box-shadow: 0 10px 30px rgba(142, 115, 91, 0.1);
-    width: 100%;
+.container.admin-wide {
+  width: min(1200px, 96vw);
+  max-width: 1200px;
+  margin: 18px auto;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
 }
 
-/* Tamaño para formularios (Estrecho) */
-.container, .formulario-card, .sucursal-card {
-    max-width: 450px;
-    margin: auto;
+.admin-shell {
+  display: grid;
+  gap: 12px;
 }
 
-/* Tamaño para el Admin (Ancho) */
-.admin-wide {
-    max-width: 1200px;
-    margin: 20px auto;
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
-/* =========================================
-   4. TABLAS Y COMPONENTES ADMIN
-   ========================================= */
-.table-wrap {
-    overflow-x: auto;
-    margin-top: 20px;
-    background: white;
-    border-radius: 10px;
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-    min-width: 800px;
-}
-
-th {
-    background: var(--primary);
-    color: white;
-    padding: 12px;
-    text-align: left;
-}
-
-td {
-    padding: 12px;
-    border-bottom: 1px solid #eee;
+.admin-header-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .kpi-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 15px;
-    margin-bottom: 25px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
 }
 
-.kpi-card {
-    background: #fcf4ec;
-    padding: 20px;
-    border-radius: 15px;
-    text-align: center;
-    border: 1px solid var(--border);
+.kpi-value {
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1.1;
 }
 
-/* =========================================
-   5. BOTONES E INPUTS
-   ========================================= */
-.btn-pro, .btn-primary, .btn-reservar {
-    background: var(--primary);
-    color: white !important;
-    padding: 12px 20px;
-    border-radius: 50px;
-    text-decoration: none;
-    font-weight: bold;
-    display: inline-block;
-    border: none;
-    cursor: pointer;
-    transition: 0.3s;
-    text-align: center;
+.panel-head {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 10px;
 }
 
-input, select, textarea {
-    width: 100%;
+.actions-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.actions-grid .btn,
+.actions-grid .btn-primary {
+  width: 100%;
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.quick-more {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.quick-more summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 9px 12px;
+  font-weight: 700;
+  color: var(--primary-dark);
+}
+
+.quick-more summary::-webkit-details-marker {
+  display: none;
+}
+
+.quick-more[open] summary {
+  border-bottom: 1px solid var(--border);
+}
+
+.quick-more-menu {
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+}
+
+.quick-more-menu a {
+  display: block;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-weight: 600;
+}
+
+.quick-more-menu a:hover {
+  background: #f4ece4;
+  text-decoration: none;
+}
+
+.filters-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  align-items: end;
+}
+
+.field {
+  min-width: 0;
+}
+
+.filters-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.search-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.search-input {
+  flex: 1;
+  min-width: 220px;
+}
+
+.table-wrap {
+  width: 100%;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: #fff;
+}
+
+table,
+.table {
+  width: 100%;
+  min-width: 920px;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 10px 11px;
+  border-bottom: 1px solid #efe5da;
+  vertical-align: top;
+}
+
+th {
+  background: #f6ede4;
+  color: #4a3a2f;
+}
+
+.td-nowrap {
+  white-space: nowrap;
+}
+
+/* Responsive */
+@media (max-width: 980px) {
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .filters-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  table,
+  .table {
+    min-width: 760px;
+  }
+}
+
+@media (min-width: 981px) {
+  .actions-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 680px) {
+  body:not(.admin-body) {
+    padding: 10px;
+  }
+
+  .container,
+  .admin-container,
+  .container.admin-wide {
+    width: 96vw;
+    margin: 10px auto;
+  }
+
+  .formulario-card,
+  .card,
+  .confirm-box,
+  .panel-card,
+  .admin-card,
+  .admin-header,
+  .kpi-card {
+    border-radius: 12px;
     padding: 12px;
-    margin: 8px 0;
-    border: 1px solid var(--border);
-    border-radius: 10px;
+  }
+
+  .formulario-card,
+  .card,
+  .confirm-box {
+    max-width: 100%;
+  }
+
+  .admin-header-actions {
+    width: 100%;
+  }
+
+  .admin-header-actions .btn,
+  .admin-header-actions .btn-primary,
+  .admin-header-actions .btn-danger {
+    width: 100%;
+  }
+
+  .filters-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .search-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-input {
+    min-width: 100%;
+  }
+
+  .table-wrap {
+    overflow-x: visible;
+  }
+
+  table,
+  .table {
+    min-width: 100% !important;
+    width: 100%;
+    table-layout: fixed;
+  }
+
+  th,
+  td {
+    min-width: 0 !important;
+    width: auto !important;
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    padding: 8px 6px;
+    font-size: 0.86rem;
+  }
+
+  .table th[style],
+  .table td[style],
+  th[style],
+  td[style] {
+    min-width: 0 !important;
+    width: auto !important;
+  }
+
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
 }
