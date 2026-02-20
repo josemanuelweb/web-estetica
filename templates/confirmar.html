@@ -12,13 +12,22 @@
     <div class="confirm-box">
       <h1>¡Casi listo, {{ nombre }}!</h1>
       <p>Tu turno fue registrado para <strong>{{ inicio.strftime('%d/%m %H:%M') }}</strong> en <strong>{{ sucursal }}</strong>.</p>
-      <p>{{ servicio }} ({{ duracion }} min) — Precio: ${{ precio }}</p>
 
-      <div class="confirm-pay">
-        <p><strong>Seña obligatoria:</strong> ${{ monto_sena }}</p>
-        <p><strong>Alias MP:</strong> {{ alias }}</p>
-        <p><strong>Titular:</strong> {{ titular }}</p>
-        <p style="margin-top:6px;"><strong>Dirección:</strong> {{ direccion }}</p>
+      <div class="confirm-grid">
+        <div class="confirm-card">
+          <h3>Detalle del turno</h3>
+          <p><strong>Servicio:</strong> {{ servicio }}</p>
+          <p><strong>Duración:</strong> {{ duracion }} min</p>
+          <p><strong>Precio:</strong> ${{ precio }}</p>
+        </div>
+
+        <div class="confirm-card confirm-pay">
+          <h3>Datos para la seña</h3>
+          <p><strong>Seña obligatoria:</strong> ${{ monto_sena }}</p>
+          <p><strong>Alias MP:</strong> {{ alias }}</p>
+          <p><strong>Titular:</strong> {{ titular }}</p>
+          <p><strong>Dirección:</strong> {{ direccion }}</p>
+        </div>
       </div>
 
       <p>Una vez realizado el pago, tocá el botón para enviar el comprobante por WhatsApp.</p>

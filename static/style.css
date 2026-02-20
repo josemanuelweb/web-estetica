@@ -251,6 +251,42 @@ textarea:focus {
   border: 1px solid var(--border);
 }
 
+.confirm-grid .confirm-pay {
+  margin: 0;
+}
+
+.confirm-box {
+  width: min(920px, 94vw);
+  display: grid;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.40);
+  border: 1px solid rgba(255, 255, 255, 0.56);
+  box-shadow: 0 12px 34px rgba(46, 30, 18, 0.22);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.confirm-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.confirm-card {
+  padding: 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface-soft);
+}
+
+.confirm-card h3 {
+  margin-bottom: 8px;
+}
+
+.confirm-card p + p {
+  margin-top: 6px;
+}
+
 /* Admin */
 body.admin-body {
   padding: 0;
@@ -270,6 +306,48 @@ body.admin-body {
 .admin-shell {
   display: grid;
   gap: 12px;
+}
+
+.admin-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  align-items: stretch;
+}
+
+.admin-grid .admin-card {
+  padding: 18px;
+  border: 1px solid #dccab8;
+  height: 100%;
+}
+
+.admin-grid .admin-card-servicio {
+  border-top: 4px solid var(--primary);
+}
+
+.admin-grid .admin-card-opcion {
+  border-top: 4px solid #b09176;
+}
+
+.admin-grid .admin-card-listado {
+  border-top: 4px solid #c7ab92;
+}
+
+.admin-grid .admin-card h3 {
+  margin-bottom: 10px;
+}
+
+.admin-span-full {
+  grid-column: 1 / -1;
+}
+
+.table-wrap-fit {
+  overflow-x: hidden;
+}
+
+table.table-fit {
+  min-width: 100%;
+  table-layout: fixed;
 }
 
 .admin-header {
@@ -371,6 +449,22 @@ body.admin-body {
 
 .field {
   min-width: 0;
+}
+
+.option-pair-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.check-inline {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.check-inline input[type="checkbox"] {
+  width: auto;
 }
 
 .filters-actions {
@@ -491,6 +585,10 @@ th {
     grid-template-columns: 1fr;
   }
 
+  .option-pair-grid {
+    grid-template-columns: 1fr;
+  }
+
   .search-row {
     flex-direction: column;
     align-items: stretch;
@@ -534,5 +632,9 @@ th {
   select,
   textarea {
     font-size: 16px;
+  }
+
+  .confirm-grid {
+    grid-template-columns: 1fr;
   }
 }

@@ -10,17 +10,19 @@
   <div class="admin-container">
     <div class="page-header">
       <h1>Gestión de Servicios</h1>
-      <p class="subtitle">Cargá/gestioná los servicios base</p>
+      <p class="subtitle">Alta de servicios y opciones en una sola pantalla</p>
     </div>
 
     <div class="admin-grid">
-      <div class="admin-card">
+      <div class="admin-card admin-card-servicio">
         <h3>Agregar servicio</h3>
-        <form method="POST">
-          <label>Nombre</label>
-          <input type="text" name="nombre" placeholder="Ej: Masajes" required>
+        <form method="POST" action="/admin/servicios">
+          <input type="hidden" name="form_type" value="servicio">
 
-          <label style="display:flex; gap:10px; align-items:center;">
+          <label>Nombre</label>
+          <input type="text" name="nombre" placeholder="Nombre Masajes" required>
+
+          <label class="check-inline">
             <input type="checkbox" name="activo" checked>
             Activo
           </label>
@@ -33,21 +35,64 @@
         </div>
       </div>
 
-      <div class="admin-card">
-        <h3>Servicios cargados</h3>
-        <div class="table-wrap">
-          <table>
+      <div class="admin-card admin-card-opcion">
+        <h3>Agregar opción</h3>
+        <form method="POST" action="/admin/servicios">
+          <input type="hidden" name="form_type" value="opcion">
+
+          <label>Servicio</label>
+          <select name="servicio_id" required {% if not servicios %}disabled{% endif %}>
+            {% for s in servicios %}
+              <option value="{{ s.id }}">{{ s.nombre }}</option>
+            {% endfor %}
+          </select>
+
+          <div class="option-pair-grid">
+            <div>
+              <label>Duración (min)</label>
+              <input type="number" name="duracion" placeholder="Ej: 60" min="1" required {% if not servicios %}disabled{% endif %}>
+            </div>
+            <div>
+              <label>Precio</label>
+              <input type="number" name="precio" placeholder="Ej: 36000" min="0" required {% if not servicios %}disabled{% endif %}>
+            </div>
+          </div>
+
+          <label class="check-inline">
+            <input type="checkbox" name="activo" checked {% if not servicios %}disabled{% endif %}>
+            Activo
+          </label>
+
+          <button type="submit" class="btn-pro" {% if not servicios %}disabled{% endif %}>Guardar opción</button>
+        </form>
+
+        {% if not servicios %}
+          <p class="hint" style="margin-top: 10px;">Primero creá al menos un servicio para poder agregar opciones.</p>
+        {% endif %}
+      </div>
+
+      <div class="admin-card admin-span-full admin-card-listado">
+        <h3>Opciones cargadas</h3>
+        <div class="table-wrap table-wrap-fit">
+          <table class="table table-fit">
             <thead>
-              <tr><th>Nombre</th><th>Activo</th></tr>
+              <tr>
+                <th>Servicio</th>
+                <th>Duración</th>
+                <th>Precio</th>
+                <th>Activo</th>
+              </tr>
             </thead>
             <tbody>
-              {% for s in servicios %}
+              {% for o in opciones %}
                 <tr>
-                  <td>{{ s.nombre }}</td>
-                  <td>{{ "Sí" if s.activo else "No" }}</td>
+                  <td>{{ o.servicio.nombre }}</td>
+                  <td>{{ o.duracion }} min</td>
+                  <td>${{ o.precio }}</td>
+                  <td>{{ "Sí" if o.activo else "No" }}</td>
                 </tr>
               {% else %}
-                <tr><td colspan="2">No hay servicios</td></tr>
+                <tr><td colspan="4">No hay opciones cargadas</td></tr>
               {% endfor %}
             </tbody>
           </table>

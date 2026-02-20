@@ -24,13 +24,19 @@
             {% endfor %}
           </select>
 
-          <label>Duración (min)</label>
-          <input type="number" name="duracion" placeholder="Ej: 60" required>
+          <div class="option-pair-grid">
+            <div>
+              <label>Duración (min)</label>
+              <input type="number" name="duracion" placeholder="Ej: 60" required>
+            </div>
 
-          <label>Precio</label>
-          <input type="number" name="precio" placeholder="Ej: 36000" required>
+            <div>
+              <label>Precio</label>
+              <input type="number" name="precio" placeholder="Ej: 36000" required>
+            </div>
+          </div>
 
-          <label style="display:flex; gap:10px; align-items:center;">
+          <label class="check-inline">
             <input type="checkbox" name="activo" checked>
             Activo
           </label>

@@ -587,19 +587,47 @@ def export_resumen_clientes_csv():
 @admin_required
 def admin_servicios():
     if request.method == "POST":
-        nombre = (request.form.get("nombre") or "").strip()
-        activo = True if request.form.get("activo") else False
-        if nombre:
-            db.session.add(Servicio(nombre=nombre, activo=activo))
-            db.session.commit()
+        form_type = (request.form.get("form_type") or "servicio").strip()
+
+        if form_type == "opcion":
+            servicio_id = _parse_int(request.form.get("servicio_id"))
+            duracion = _parse_int(request.form.get("duracion"))
+            precio = _parse_int(request.form.get("precio"))
+            activo = True if request.form.get("activo") else False
+
+            servicio = db.session.get(Servicio, servicio_id) if servicio_id else None
+            if servicio and duracion and precio and duracion > 0 and precio >= 0:
+                db.session.add(
+                    ServicioOpcion(
+                        servicio_id=servicio.id,
+                        duracion=duracion,
+                        precio=precio,
+                        activo=activo
+                    )
+                )
+                db.session.commit()
+        else:
+            nombre = (request.form.get("nombre") or "").strip()
+            activo = True if request.form.get("activo") else False
+            if nombre:
+                db.session.add(Servicio(nombre=nombre, activo=activo))
+                db.session.commit()
         return redirect(url_for("admin_servicios"))
 
     servicios = Servicio.query.order_by(Servicio.nombre).all()
-    return render_template("admin_servicios.html", servicios=servicios)
+    opciones = (
+        ServicioOpcion.query.join(Servicio)
+        .order_by(Servicio.nombre, ServicioOpcion.duracion)
+        .all()
+    )
+    return render_template("admin_servicios.html", servicios=servicios, opciones=opciones)
 
 @app.route("/admin/opciones", methods=["GET", "POST"])
 @admin_required
 def admin_opciones():
+    if request.method == "GET":
+        return redirect(url_for("admin_servicios"))
+
     servicios = Servicio.query.order_by(Servicio.nombre).all()
 
     if request.method == "POST":
@@ -619,7 +647,7 @@ def admin_opciones():
             )
             db.session.commit()
 
-        return redirect(url_for("admin_opciones"))
+        return redirect(url_for("admin_servicios"))
 
     opciones = ServicioOpcion.query.join(Servicio).order_by(Servicio.nombre, ServicioOpcion.duracion).all()
     return render_template("admin_opciones.html", servicios=servicios, opciones=opciones)
