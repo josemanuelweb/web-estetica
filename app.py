@@ -118,7 +118,7 @@ SUCURSAL_MAP = {
 MONTO_SENA = 10000
 MP_ALIAS = "Mercado.P"
 MP_TITULAR = "Carmen Maria De La Concepción"
-WHATSAPP_NUM = "5491125427382"
+WHATSAPP_NUM = "5491123869037"
 
 
 # ======================
