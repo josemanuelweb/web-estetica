@@ -49,9 +49,8 @@ a:hover {
 }
 
 /* Layout base */
-.container,
-.admin-container {
-  width: min(1200px, 94vw);
+.container {
+  width: min(1200px, 94%);
   margin: 18px auto;
 }
 
@@ -132,10 +131,6 @@ a:hover {
 .admin-title {
   font-size: 2rem;
   line-height: 1.1;
-}
-
-.admin-link {
-  display: inline-block;
 }
 
 .notice {
@@ -329,11 +324,14 @@ textarea:focus {
 body.admin-body {
   padding: 0;
   background: linear-gradient(180deg, #f7f0e8, #f2ebe3);
+  margin: 0;
+  display: block;
+  min-height: auto;
   overflow-x: hidden;
 }
 
-.container.admin-wide {
-  width: min(1200px, 96vw);
+.admin-container {
+  width: min(1200px, 96%);
   max-width: 1200px;
   margin: 18px auto;
   padding: 0;
@@ -345,6 +343,11 @@ body.admin-body {
 .admin-shell {
   display: grid;
   gap: 12px;
+  width: 100%;
+}
+
+.admin-shell > * {
+  min-width: 0;
 }
 
 .admin-grid {
@@ -525,10 +528,34 @@ table.table-fit {
 
 .table-wrap {
   width: 100%;
+  max-width: 100%;
   overflow: auto;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   background: #fff;
+}
+
+body.admin-body .table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+body.admin-body table,
+body.admin-body .table {
+  min-width: 100%;
+  width: 100%;
+  table-layout: fixed;
+}
+
+body.admin-body .table-wrap-turnos .table {
+  min-width: 1050px;
+  table-layout: auto;
+}
+
+body.admin-body .panel-card,
+body.admin-body .admin-header,
+body.admin-body .kpi-card {
+  min-width: 0;
 }
 
 table,
@@ -683,9 +710,8 @@ th {
   }
 
   .container,
-  .admin-container,
-  .container.admin-wide {
-    width: 96vw;
+  .admin-container {
+    width: 96%;
     margin: 10px auto;
   }
 
