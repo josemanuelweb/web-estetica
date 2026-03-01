@@ -110,6 +110,8 @@ a:hover {
   border-radius: var(--radius-md);
   padding: 10px 12px;
   font-size: 0.92rem;
+  width: min(520px, 100%);
+  margin: 0 auto;
 }
 
 .sucursal-card p {
@@ -118,6 +120,8 @@ a:hover {
 
 .sucursal-card {
   text-align: center;
+  width: min(520px, 100%);
+  margin: 0 auto;
 }
 
 label {
@@ -568,18 +572,39 @@ th {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: 52px;
+  height: 52px;
   background: #1ca65d;
   color: #fff !important;
   border: 1px solid #13834a;
-  border-radius: 999px;
-  padding: 10px 14px;
+  border-radius: 50%;
+  padding: 0;
+  font-size: 0;
+  line-height: 0;
+  color: transparent !important;
   font-weight: 700;
+  overflow: hidden;
   box-shadow: 0 10px 22px rgba(19, 131, 74, 0.28);
 }
 
 .floating-wa:hover {
   transform: translateY(-1px);
   text-decoration: none;
+}
+
+.floating-wa::before {
+  content: "";
+  display: block;
+  width: 28px;
+  height: 28px;
+  background: #fff;
+  -webkit-mask: url("/static/wa-icon.svg") center / contain no-repeat;
+  mask: url("/static/wa-icon.svg") center / contain no-repeat;
+}
+
+.floating-wa img,
+.floating-wa svg {
+  display: none;
 }
 
 /* Responsive */
@@ -707,6 +732,8 @@ th {
   .floating-wa {
     right: 12px;
     bottom: 12px;
-    padding: 9px 12px;
+    width: 52px;
+    height: 52px;
+    padding: 0;
   }
 }
