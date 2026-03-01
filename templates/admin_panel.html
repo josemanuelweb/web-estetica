@@ -148,8 +148,8 @@
           <p>Listado de turnos según filtros actuales</p>
         </div>
 
-        <div class="table-wrap">
-          <table class="table">
+        <div class="table-wrap table-wrap-turnos">
+          <table class="table table-turnos">
             <thead>
               <tr>
                 <th style="min-width:180px;">Cliente</th>
@@ -168,19 +168,19 @@
             <tbody>
               {% for t in turnos %}
                 <tr>
-                  <td class="td-nowrap">{{ t.nombre }}</td>
+                  <td class="td-nowrap" data-label="Cliente">{{ t.nombre }}</td>
 
-                  <td>
+                  <td data-label="Cliente ID">
                     <strong>{{ (t.telefono or '')[-6:] }}</strong>
                     <div class="muted" style="font-size:12px;">{{ t.telefono }}</div>
                   </td>
 
-                  <td>{{ visitas_por_tel.get(t.telefono, 1) }}</td>
-                  <td>{{ t.sucursal }}</td>
-                  <td>{{ t.servicio_nombre }} ({{ t.duracion }}m)</td>
-                  <td>{{ t.inicio.strftime('%d/%m %H:%M') }}</td>
+                  <td data-label="Visitas">{{ visitas_por_tel.get(t.telefono, 1) }}</td>
+                  <td data-label="Sucursal">{{ t.sucursal }}</td>
+                  <td data-label="Servicio">{{ t.servicio_nombre }} ({{ t.duracion }}m)</td>
+                  <td data-label="Inicio">{{ t.inicio.strftime('%d/%m %H:%M') }}</td>
 
-                  <td>
+                  <td data-label="Estado">
                     <span class="estado-badge estado-{{ t.estado }}">{{ t.estado|capitalize }}</span>
                     <form method="POST" action="/admin/turno/{{ t.id }}/estado" class="inline-state-form">
                       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -192,9 +192,9 @@
                     </form>
                   </td>
 
-                  <td>${{ t.precio }}</td>
+                  <td data-label="Precio">${{ t.precio }}</td>
 
-                  <td>
+                  <td data-label="Observación">
                     <textarea
                       name="observacion"
                       form="obs-{{ t.id }}"
@@ -204,7 +204,7 @@
                     >{{ t.observacion or "" }}</textarea>
                   </td>
 
-                  <td style="vertical-align:top;">
+                  <td style="vertical-align:top;" data-label="Acción">
                     <form id="obs-{{ t.id }}" method="POST" action="/admin/turno/{{ t.id }}/observacion">
                       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                       <button type="submit" class="btn-pro" style="width:auto; padding:10px 14px;">

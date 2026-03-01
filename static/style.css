@@ -82,6 +82,40 @@ a:hover {
   gap: 12px;
 }
 
+.hero-banner {
+  position: relative;
+  width: 100vw;
+  margin-left: 50%;
+  transform: translateX(-50%);
+  height: clamp(280px, 42vw, 430px);
+  overflow: hidden;
+}
+
+.hero-banner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 42%;
+  display: block;
+}
+
+.hero-banner-overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 18px;
+  background: linear-gradient(to bottom, rgba(32, 22, 14, 0.2), rgba(32, 22, 14, 0.5));
+}
+
+.hero-banner-overlay h1 {
+  color: #fff;
+  font-size: clamp(2rem, 5.3vw, 3.8rem);
+  letter-spacing: 0.4px;
+  text-shadow: 0 6px 22px rgba(0, 0, 0, 0.4);
+}
+
 .subtitle,
 .admin-subtitle,
 .muted,
@@ -295,6 +329,7 @@ textarea:focus {
 body.admin-body {
   padding: 0;
   background: linear-gradient(180deg, #f7f0e8, #f2ebe3);
+  overflow-x: hidden;
 }
 
 .container.admin-wide {
@@ -621,8 +656,17 @@ th {
     grid-template-columns: 1fr 1fr 1fr;
   }
 
-  table,
-  .table {
+  body:not(.admin-body) table,
+  body:not(.admin-body) .table {
+    min-width: 760px;
+  }
+
+  body.admin-body table,
+  body.admin-body .table {
+    min-width: 100%;
+  }
+
+  body.admin-body .table-wrap-turnos .table {
     min-width: 760px;
   }
 }
@@ -635,7 +679,7 @@ th {
 
 @media (max-width: 680px) {
   body:not(.admin-body) {
-    padding: 10px;
+    padding: 0 10px 10px;
   }
 
   .container,
@@ -689,19 +733,19 @@ th {
     min-width: 100%;
   }
 
-  .table-wrap {
+  body:not(.admin-body) .table-wrap {
     overflow-x: visible;
   }
 
-  table,
-  .table {
+  body:not(.admin-body) table,
+  body:not(.admin-body) .table {
     min-width: 100% !important;
     width: 100%;
     table-layout: fixed;
   }
 
-  th,
-  td {
+  body:not(.admin-body) th,
+  body:not(.admin-body) td {
     min-width: 0 !important;
     width: auto !important;
     white-space: normal;
@@ -711,10 +755,10 @@ th {
     font-size: 0.86rem;
   }
 
-  .table th[style],
-  .table td[style],
-  th[style],
-  td[style] {
+  body:not(.admin-body) .table th[style],
+  body:not(.admin-body) .table td[style],
+  body:not(.admin-body) th[style],
+  body:not(.admin-body) td[style] {
     min-width: 0 !important;
     width: auto !important;
   }
@@ -729,11 +773,112 @@ th {
     grid-template-columns: 1fr;
   }
 
+  .hero-banner,
+  .hero-banner img {
+    height: clamp(230px, 58vw, 310px);
+  }
+
+  .hero-banner-overlay {
+    padding: 14px;
+    background: linear-gradient(to bottom, rgba(32, 22, 14, 0.22), rgba(32, 22, 14, 0.56));
+  }
+
+  .hero-banner-overlay h1 {
+    font-size: clamp(1.7rem, 8.2vw, 2.4rem);
+    line-height: 1.08;
+    letter-spacing: 0.3px;
+  }
+
   .floating-wa {
     right: 12px;
     bottom: 12px;
     width: 52px;
     height: 52px;
     padding: 0;
+  }
+
+  body.admin-body .table-wrap {
+    overflow-x: visible;
+  }
+
+  body.admin-body table,
+  body.admin-body .table {
+    min-width: 100% !important;
+    width: 100%;
+    table-layout: fixed;
+  }
+
+  body.admin-body th,
+  body.admin-body td {
+    min-width: 0 !important;
+    width: auto !important;
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+
+  body.admin-body .table-wrap-turnos {
+    overflow-x: visible;
+  }
+
+  body.admin-body .table-wrap-turnos .table {
+    min-width: 100% !important;
+    table-layout: fixed;
+  }
+
+  body.admin-body .table-wrap-turnos th,
+  body.admin-body .table-wrap-turnos td {
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+
+  body.admin-body .table-turnos thead {
+    display: none;
+  }
+
+  body.admin-body .table-turnos tbody,
+  body.admin-body .table-turnos tr,
+  body.admin-body .table-turnos td {
+    display: block;
+    width: 100%;
+  }
+
+  body.admin-body .table-turnos tr {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: #fff;
+    margin-bottom: 10px;
+    padding: 8px;
+  }
+
+  body.admin-body .table-turnos td {
+    border-bottom: 1px solid #efe5da;
+    padding: 8px 6px;
+  }
+
+  body.admin-body .table-turnos td:last-child {
+    border-bottom: 0;
+  }
+
+  body.admin-body .table-turnos td::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: var(--muted);
+    margin-bottom: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  body.admin-body .table-turnos td[colspan] {
+    text-align: center;
+    padding: 12px 8px;
+  }
+
+  body.admin-body .table-turnos td[colspan]::before {
+    content: "";
+    display: none;
   }
 }

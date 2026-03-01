@@ -55,8 +55,8 @@ TZ_AR = ZoneInfo("America/Argentina/Buenos_Aires")
 DEFAULT_CAPACIDAD = 2
 
 SUCURSALES = [
-    {"id": 1, "nombre": "Nuñez", "direccion": "Nuñez 0000", "capacidad": 2},
-    {"id": 2, "nombre": "Villa Urquiza", "direccion": "Villa Urquiza 0000", "capacidad": 2},
+    {"id": 1, "nombre": "Puerto Norte", "direccion": "Av. Brisas del Lago 1240", "capacidad": 2},
+    {"id": 2, "nombre": "Jardin Central", "direccion": "Calle Los Ombues 875", "capacidad": 2},
 ]
 SUCURSAL_MAP = {s["id"]: s for s in SUCURSALES}
 
@@ -183,6 +183,26 @@ def ensure_schema_updates():
         db.session.commit()
 
 
+def migrate_legacy_sucursal_names():
+    legacy_names = {
+        "Nuñez": "Puerto Norte",
+        "Núñez": "Puerto Norte",
+        "Villa Urquiza": "Jardin Central",
+    }
+    for old_name, new_name in legacy_names.items():
+        db.session.query(Turno).filter(Turno.sucursal == old_name).update(
+            {Turno.sucursal: new_name},
+            synchronize_session=False,
+        )
+        old_row = Sucursal.query.filter_by(nombre=old_name).first()
+        new_row = Sucursal.query.filter_by(nombre=new_name).first()
+        if old_row and not new_row:
+            old_row.nombre = new_name
+        elif old_row and new_row:
+            db.session.delete(old_row)
+    db.session.commit()
+
+
 def seed_sucursales():
     for s in SUCURSALES:
         row = Sucursal.query.filter_by(nombre=s["nombre"]).first()
@@ -195,6 +215,11 @@ def seed_sucursales():
                     activa=True,
                 )
             )
+        else:
+            row.direccion = s["direccion"]
+            row.capacidad = int(s["capacidad"])
+            if row.activa is None:
+                row.activa = True
     db.session.commit()
 
 
@@ -245,6 +270,7 @@ def csrf_protect():
 with app.app_context():
     db.create_all()
     ensure_schema_updates()
+    migrate_legacy_sucursal_names()
     seed_sucursales()
 
 

@@ -4,19 +4,23 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Estética y Masajes</title>
-  <meta name="description" content="Reservá turnos de estética y masajes en Nuñez y Villa Urquiza. Confirmación rápida por WhatsApp.">
+  <meta name="description" content="Reservá turnos de estética y masajes en nuestras sucursales. Confirmación rápida por WhatsApp.">
   <link rel="stylesheet" href="/static/style.css">
   {% include '_analytics.html' %}
 </head>
 <body>
+  <section class="hero-banner" aria-label="Cuidado de tu Cuerpo">
+    <img src="/static/fondoWeb.png" alt="Ambiente de spa y bienestar">
+    <div class="hero-banner-overlay">
+      <h1>Estética y Masajes</h1>
+    </div>
+  </section>
+
   <div class="container">
     <div class="home-wrap">
-      <div class="page-header hero-header" style="text-align: center;">
-        <p class="hero-kicker">Turnos online en 2 minutos</p>
-        <h1>Estética y Masajes</h1>
-        <p class="subtitle">Elegí tu sucursal y confirmá por WhatsApp sin vueltas.</p>
-        <a href="#sucursales" class="btn-reservar hero-cta">Reservar ahora</a>
-      </div>
+      <p class="subtitle" style="text-align: center;">
+        Elegí la sucursal más cómoda para vos y reservá tu turno en pocos pasos.
+      </p>
 
       <div id="sucursales"></div>
       {% for s in sucursales %}
