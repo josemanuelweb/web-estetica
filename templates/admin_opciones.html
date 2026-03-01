@@ -17,6 +17,7 @@
       <div class="admin-card">
         <h3>Agregar opción</h3>
         <form method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <label>Servicio</label>
           <select name="servicio_id" required>
             {% for s in servicios %}

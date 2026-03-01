@@ -5,14 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Reservar Turno</title>
   <link rel="stylesheet" href="/static/style.css">
+  {% include '_analytics.html' %}
 </head>
 <body>
 
   <div class="formulario-card">
     <h1>Reservar en {{ sucursal }}</h1>
-    <p class="subtitle" style="margin-top:6px;">Agendá tu cita ahora mismo</p>
+    <p class="subtitle" style="margin-top:6px;">Elegí servicio, fecha y horario disponible</p>
 
     <form action="/confirmar" method="POST" id="formReserva">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
       <label>Nombre y Apellido</label>
       <input type="text" name="nombre" placeholder="Ej: Nombre y Apellido" required>
 
@@ -22,15 +25,12 @@
       <label>Servicio</label>
       <select name="opcion_id" id="opcion_id" required>
         {% for o in opciones %}
-          <option value="{{ o.id }}">
-            {{ o.servicio.nombre }} — {{ o.duracion }} min — ${{ o.precio }}
-          </option>
+          <option value="{{ o.id }}">{{ o.servicio.nombre }} - {{ o.duracion }} min - ${{ o.precio }}</option>
         {% endfor %}
       </select>
 
       <input type="hidden" name="sucursal" value="{{ sucursal }}">
       <input type="hidden" name="direccion" value="{{ direccion }}">
-      
       <input type="hidden" name="fecha_cita" id="fecha_cita" required>
 
       <label>Fecha del turno</label>
@@ -59,14 +59,12 @@
   const estadoEl = document.getElementById('estado');
   const btnSubmit = document.getElementById('btnSubmit');
 
-  // 1. SETEAR FECHA MÍNIMA (HOY)
-  // Eliminamos el "+1" para permitir turnos en el día
   const ahora = new Date();
   const yyyy = ahora.getFullYear();
   const mm = String(ahora.getMonth() + 1).padStart(2, '0');
   const dd = String(ahora.getDate()).padStart(2, '0');
   const hoyStr = `${yyyy}-${mm}-${dd}`;
-  
+
   fechaEl.min = hoyStr;
   fechaEl.value = hoyStr;
 
@@ -82,7 +80,7 @@
     btnSubmit.disabled = true;
 
     try {
-      const url = `/api/slots?date=${date}&sucursal=${sucursal}&opcion_id=${opcion_id}`;
+      const url = `/api/slots?date=${date}&sucursal=${encodeURIComponent(sucursal)}&opcion_id=${opcion_id}`;
       const res = await fetch(url);
       const data = await res.json();
 
@@ -93,15 +91,15 @@
         estadoEl.style.display = 'none';
       } else {
         horaEl.innerHTML = '<option value="">Sin horarios</option>';
-        estadoEl.textContent = "No hay turnos disponibles para hoy. Probá otra fecha.";
+        estadoEl.textContent = "No hay turnos disponibles para esa fecha. Probá otra.";
         estadoEl.style.display = 'block';
       }
     } catch (e) {
-      console.error("Error cargando slots:", e);
+      estadoEl.textContent = "No pudimos cargar horarios. Reintentá.";
+      estadoEl.style.display = 'block';
     }
   }
 
-  // Escuchar cambios para actualizar la fecha final
   function actualizarFechaFinal() {
     if (fechaEl.value && horaEl.value) {
       fechaCitaEl.value = `${fechaEl.value}T${horaEl.value}`;
@@ -111,13 +109,19 @@
     }
   }
 
-  fechaEl.addEventListener('change', cargarSlots);
-  opcionEl.addEventListener('change', cargarSlots);
+  fechaEl.addEventListener('change', () => {
+    fechaCitaEl.value = '';
+    cargarSlots();
+  });
+  opcionEl.addEventListener('change', () => {
+    fechaCitaEl.value = '';
+    cargarSlots();
+  });
   horaEl.addEventListener('change', actualizarFechaFinal);
 
-  // Carga inicial
   cargarSlots();
 </script>
 
+{% include '_floating_wa.html' %}
 </body>
 </html>

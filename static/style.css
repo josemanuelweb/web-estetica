@@ -442,7 +442,7 @@ table.table-fit {
 
 .filters-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 10px;
   align-items: end;
 }
@@ -516,6 +516,72 @@ th {
   white-space: nowrap;
 }
 
+.inline-state-form {
+  margin-top: 8px;
+}
+
+.inline-state-form select {
+  font-size: 0.85rem;
+  padding: 6px 8px;
+}
+
+.estado-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 4px 9px;
+  border: 1px solid transparent;
+  text-transform: capitalize;
+}
+
+.estado-pendiente {
+  background: #fff2dd;
+  color: #925e12;
+  border-color: #efd5a8;
+}
+
+.estado-confirmado {
+  background: #e6f6ee;
+  color: #1e7148;
+  border-color: #b9e6cf;
+}
+
+.estado-cancelado {
+  background: #fdeaea;
+  color: #9a2d2d;
+  border-color: #f1c1c1;
+}
+
+.estado-asistio {
+  background: #e8efff;
+  color: #2f4d90;
+  border-color: #c0cdee;
+}
+
+.floating-wa {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 40;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #1ca65d;
+  color: #fff !important;
+  border: 1px solid #13834a;
+  border-radius: 999px;
+  padding: 10px 14px;
+  font-weight: 700;
+  box-shadow: 0 10px 22px rgba(19, 131, 74, 0.28);
+}
+
+.floating-wa:hover {
+  transform: translateY(-1px);
+  text-decoration: none;
+}
+
 /* Responsive */
 @media (max-width: 980px) {
   .kpi-grid {
@@ -527,7 +593,7 @@ th {
   }
 
   .filters-grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr;
   }
 
   table,
@@ -636,5 +702,11 @@ th {
 
   .confirm-grid {
     grid-template-columns: 1fr;
+  }
+
+  .floating-wa {
+    right: 12px;
+    bottom: 12px;
+    padding: 9px 12px;
   }
 }

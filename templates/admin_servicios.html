@@ -17,6 +17,7 @@
       <div class="admin-card admin-card-servicio">
         <h3>Agregar servicio</h3>
         <form method="POST" action="/admin/servicios">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <input type="hidden" name="form_type" value="servicio">
 
           <label>Nombre</label>
@@ -38,6 +39,7 @@
       <div class="admin-card admin-card-opcion">
         <h3>Agregar opción</h3>
         <form method="POST" action="/admin/servicios">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <input type="hidden" name="form_type" value="opcion">
 
           <label>Servicio</label>

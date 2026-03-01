@@ -8,7 +8,7 @@
 </head>
 <body class="admin-body">
 
-  <div class="container admin-wide"> 
+  <div class="container admin-wide">
     <div class="admin-shell">
       <header class="admin-header">
         <div>
@@ -21,23 +21,33 @@
         </div>
       </header>
 
-      <!-- KPIs (opcionales, si no tenés stats se ven igual prolijos) -->
       <section class="kpi-grid">
         <div class="kpi-card">
           <div class="kpi-label">Turnos (vista actual)</div>
           <div class="kpi-value">{{ turnos|length }}</div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-label">Sucursales en lista</div>
-          <div class="kpi-value">{{ sucursales|length }}</div>
+          <div class="kpi-label">Pendientes</div>
+          <div class="kpi-value">{{ kpi_estado['pendiente'] }}</div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-label">Servicios en lista</div>
-          <div class="kpi-value">{{ servicios|length }}</div>
+          <div class="kpi-label">Confirmados</div>
+          <div class="kpi-value">{{ kpi_estado['confirmado'] }}</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Cancelados</div>
+          <div class="kpi-value">{{ kpi_estado['cancelado'] }}</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Asistieron</div>
+          <div class="kpi-value">{{ kpi_estado['asistio'] }}</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Sucursales / Servicios</div>
+          <div class="kpi-value">{{ sucursales|length }} / {{ servicios|length }}</div>
         </div>
       </section>
 
-      <!-- Acciones rápidas -->
       <section class="panel-card">
         <div class="panel-head">
           <h2>Acciones rápidas</h2>
@@ -46,8 +56,9 @@
 
         <div class="actions-grid">
           <a class="btn btn-primary" href="/admin/servicios">Gestión de servicios</a>
+          <a class="btn btn-primary" href="/admin/reminders">Recordatorios 24h</a>
           <a class="btn btn-primary"
-            href="/admin/export/turnos.csv?from={{ filtros['from'] }}&to={{ filtros['to'] }}&sucursal={{ filtros['sucursal'] }}&servicio={{ filtros['servicio'] }}&cliente_id={{ filtros['cliente_id'] }}">
+            href="/admin/export/turnos.csv?from={{ filtros['from'] }}&to={{ filtros['to'] }}&sucursal={{ filtros['sucursal'] }}&servicio={{ filtros['servicio'] }}&estado={{ filtros['estado'] }}&cliente_id={{ filtros['cliente_id'] }}">
             Exportar CSV (filtrado)
           </a>
 
@@ -63,7 +74,6 @@
         </div>
       </section>
 
-      <!-- Filtros -->
       <section class="panel-card">
         <div class="panel-head">
           <h2>Filtros</h2>
@@ -101,17 +111,31 @@
             </select>
           </div>
 
+          <div class="field">
+            <label>Estado</label>
+            <select name="estado">
+              <option value="">Todos</option>
+              {% for e in estados_turno %}
+                <option value="{{ e }}" {% if filtros['estado']==e %}selected{% endif %}>{{ e|capitalize }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
           <div class="filters-actions">
             <button class="btn btn-primary" type="submit">Aplicar filtros</button>
           </div>
         </form>
       </section>
 
-      <!-- Tabla -->
       <section class="panel-card">
         <div class="panel-head">
           <h2>Turnos</h2>
           <form method="GET" action="/admin" class="search-row">
+            <input type="hidden" name="from" value="{{ filtros['from'] }}">
+            <input type="hidden" name="to" value="{{ filtros['to'] }}">
+            <input type="hidden" name="sucursal" value="{{ filtros['sucursal'] }}">
+            <input type="hidden" name="servicio" value="{{ filtros['servicio'] }}">
+            <input type="hidden" name="estado" value="{{ filtros['estado'] }}">
             <input type="text" name="cliente_id"
                   placeholder="Buscar por Cliente ID (WhatsApp) ej: 1112345678"
                   value="{{ filtros['cliente_id'] }}"
@@ -134,9 +158,10 @@
                 <th style="min-width:140px;">Sucursal</th>
                 <th style="min-width:180px;">Servicio</th>
                 <th style="min-width:120px;">Inicio</th>
+                <th style="min-width:120px;">Estado</th>
                 <th style="min-width:90px;">Precio</th>
-                <th style="min-width:280px;">Observación</th>
-                <th style="width:110px;">Acción</th>
+                <th style="min-width:260px;">Observación</th>
+                <th style="min-width:180px;">Acción</th>
               </tr>
             </thead>
 
@@ -151,12 +176,21 @@
                   </td>
 
                   <td>{{ visitas_por_tel.get(t.telefono, 1) }}</td>
-
                   <td>{{ t.sucursal }}</td>
-
                   <td>{{ t.servicio_nombre }} ({{ t.duracion }}m)</td>
-
                   <td>{{ t.inicio.strftime('%d/%m %H:%M') }}</td>
+
+                  <td>
+                    <span class="estado-badge estado-{{ t.estado }}">{{ t.estado|capitalize }}</span>
+                    <form method="POST" action="/admin/turno/{{ t.id }}/estado" class="inline-state-form">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <select name="estado" onchange="this.form.submit()">
+                        {% for e in estados_turno %}
+                          <option value="{{ e }}" {% if t.estado == e %}selected{% endif %}>{{ e|capitalize }}</option>
+                        {% endfor %}
+                      </select>
+                    </form>
+                  </td>
 
                   <td>${{ t.precio }}</td>
 
@@ -172,15 +206,16 @@
 
                   <td style="vertical-align:top;">
                     <form id="obs-{{ t.id }}" method="POST" action="/admin/turno/{{ t.id }}/observacion">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                       <button type="submit" class="btn-pro" style="width:auto; padding:10px 14px;">
-                        Guardar
+                        Guardar nota
                       </button>
                     </form>
                   </td>
                 </tr>
               {% else %}
                 <tr>
-                  <td colspan="9" class="muted">No hay turnos todavía.</td>
+                  <td colspan="10" class="muted">No hay turnos todavía.</td>
                 </tr>
               {% endfor %}
             </tbody>
@@ -188,7 +223,7 @@
         </div>
 
         <div class="hint" style="text-align: center;">
-          Tip: usá filtros por fecha y exportá CSV para reportes en Excel/Sheets.
+          Tip: usá filtros por fecha y estado, luego exportá CSV para reportes en Excel/Sheets.
         </div>
       </section>
 

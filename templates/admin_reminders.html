@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin - Recordatorios</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="admin-body">
+  <div class="container admin-wide">
+    <div class="admin-shell">
+      <header class="admin-header">
+        <div>
+          <h1 class="admin-title">Recordatorios 24h</h1>
+          <p class="admin-subtitle">Turnos entre 23 y 25 horas desde ahora</p>
+        </div>
+        <div class="admin-header-actions">
+          <a class="btn btn-primary" href="/admin">Volver al panel</a>
+          <a class="btn btn-danger" href="/admin/logout">Cerrar sesión</a>
+        </div>
+      </header>
+
+      <section class="panel-card">
+        <div class="panel-head">
+          <h2>Listado</h2>
+          <p>Usá el botón para abrir el chat y enviar el recordatorio manualmente.</p>
+        </div>
+
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th style="min-width:90px;">Turno</th>
+                <th style="min-width:160px;">Cliente</th>
+                <th style="min-width:140px;">Inicio</th>
+                <th style="min-width:140px;">Sucursal</th>
+                <th style="min-width:160px;">Servicio</th>
+                <th style="min-width:140px;">Estado envío</th>
+                <th style="min-width:140px;">Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in reminders %}
+                {% set t = row.turno %}
+                <tr>
+                  <td>#{{ t.id }}</td>
+                  <td>
+                    <strong>{{ t.nombre }}</strong>
+                    <div class="muted" style="font-size:12px;">{{ t.telefono }}</div>
+                  </td>
+                  <td>{{ t.inicio.strftime('%d/%m %H:%M') }}</td>
+                  <td>{{ t.sucursal }}</td>
+                  <td>{{ t.servicio_nombre }}</td>
+                  <td>
+                    {% if row.was_sent %}
+                      <span class="estado-badge estado-asistio">Enviado</span>
+                    {% else %}
+                      <span class="estado-badge estado-pendiente">Pendiente</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <a class="btn btn-wa" target="_blank" rel="noopener" href="{{ row.link }}">Abrir WhatsApp</a>
+                  </td>
+                </tr>
+              {% else %}
+                <tr>
+                  <td colspan="7" class="muted">No hay turnos en ventana de recordatorio (23-25h).</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </div>
+</body>
+</html>
