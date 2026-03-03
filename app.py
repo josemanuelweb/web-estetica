@@ -395,7 +395,7 @@ def confirmar():
             return render_template("error.html", mensaje="El turno supera el horario de cierre.")
 
         # Previene sobre-reserva en escenarios concurrentes.
-        if db.session.bind.dialect.name == "sqlite":
+        if db.session.get_bind().dialect.name == "sqlite":
             db.session.execute(text("BEGIN IMMEDIATE"))
         else:
             db.session.query(Sucursal).filter_by(nombre=sucursal).with_for_update().first()
@@ -556,6 +556,25 @@ def export_turnos_csv():
     }
     turnos = _turnos_query_desde_filtros(filtros).order_by(Turno.id.asc()).all()
 
+    # Evita filas duplicadas del mismo turno lógico en la exportación.
+    # Se conserva el primer registro por ID para mantener estabilidad.
+    seen = set()
+    turnos_unicos = []
+    for t in turnos:
+        key = (
+            (t.telefono or "").strip(),
+            (t.nombre or "").strip().lower(),
+            t.inicio,
+            (t.sucursal or "").strip().lower(),
+            (t.servicio_nombre or "").strip().lower(),
+            int(t.duracion or 0),
+            int(t.precio or 0),
+        )
+        if key in seen:
+            continue
+        seen.add(key)
+        turnos_unicos.append(t)
+
     output = io.StringIO()
     output.write("\ufeff")
     writer = csv.writer(output, delimiter=";")
@@ -575,7 +594,7 @@ def export_turnos_csv():
         ]
     )
 
-    tels = {t.telefono for t in turnos if t.telefono}
+    tels = {t.telefono for t in turnos_unicos if t.telefono}
     visitas_por_tel = {}
     if tels:
         filas = (
@@ -586,7 +605,16 @@ def export_turnos_csv():
         )
         visitas_por_tel = {tel: cnt for tel, cnt in filas}
 
-    for t in turnos:
+    visitas_ya_mostradas = set()
+    for t in turnos_unicos:
+        tel = (t.telefono or "").strip()
+        visitas_col = ""
+        if tel and tel not in visitas_ya_mostradas:
+            visitas_col = visitas_por_tel.get(tel, 1)
+            visitas_ya_mostradas.add(tel)
+        elif not tel:
+            visitas_col = 1
+
         writer.writerow(
             [
                 t.id,
@@ -596,7 +624,7 @@ def export_turnos_csv():
                 t.sucursal,
                 t.servicio_nombre,
                 t.estado,
-                visitas_por_tel.get(t.telefono, 1),
+                visitas_col,
                 t.duracion,
                 t.precio,
                 (t.observacion or ""),
@@ -683,6 +711,116 @@ def export_resumen_clientes_csv():
         output.getvalue(),
         mimetype="text/csv; charset=utf-8",
         headers={"Content-Disposition": "attachment; filename=resumen_clientes.csv"},
+    )
+
+
+@app.route("/admin/export/resumen_cliente_dia.csv")
+@admin_required
+def export_resumen_cliente_dia_csv():
+    filtros = {
+        "from": request.args.get("from", ""),
+        "to": request.args.get("to", ""),
+        "sucursal": request.args.get("sucursal", ""),
+        "servicio": request.args.get("servicio", ""),
+        "estado": request.args.get("estado", ""),
+        "cliente_id": request.args.get("cliente_id", ""),
+    }
+    turnos = _turnos_query_desde_filtros(filtros).order_by(Turno.inicio.asc(), Turno.id.asc()).all()
+
+    # Evita duplicados lógicos en el resumen diario.
+    seen = set()
+    turnos_unicos = []
+    for t in turnos:
+        key = (
+            (t.telefono or "").strip(),
+            (t.nombre or "").strip().lower(),
+            t.inicio,
+            (t.sucursal or "").strip().lower(),
+            (t.servicio_nombre or "").strip().lower(),
+            int(t.duracion or 0),
+            int(t.precio or 0),
+        )
+        if key in seen:
+            continue
+        seen.add(key)
+        turnos_unicos.append(t)
+
+    tels = {(t.telefono or "").strip() for t in turnos_unicos if (t.telefono or "").strip()}
+    visitas_por_tel = {}
+    if tels:
+        filas_visitas = (
+            db.session.query(Turno.telefono, func.count(Turno.id))
+            .filter(Turno.telefono.in_(list(tels)))
+            .group_by(Turno.telefono)
+            .all()
+        )
+        visitas_por_tel = {tel: cnt for tel, cnt in filas_visitas}
+
+    resumen = {}
+    for t in turnos_unicos:
+        tel = (t.telefono or "").strip()
+        nombre = (t.nombre or "").strip()
+        fecha = t.inicio.date()
+        key = (tel, fecha) if tel else (nombre.lower(), fecha)
+        r = resumen.setdefault(
+            key,
+            {
+                "fecha": fecha,
+                "nombre": nombre,
+                "telefono": tel,
+                "servicios": [],
+                "sucursales": set(),
+                "cantidad_dia": 0,
+                "total_dia": 0,
+            },
+        )
+        r["servicios"].append(f"{t.inicio.strftime('%H:%M')} {t.servicio_nombre}")
+        if t.sucursal:
+            r["sucursales"].add(t.sucursal)
+        r["cantidad_dia"] += 1
+        r["total_dia"] += int(t.precio or 0)
+
+    filas = sorted(
+        resumen.values(),
+        key=lambda x: (x["fecha"], x["nombre"].lower(), x["telefono"]),
+        reverse=True,
+    )
+
+    output = io.StringIO()
+    output.write("\ufeff")
+    writer = csv.writer(output, delimiter=";")
+    writer.writerow(
+        [
+            "Fecha",
+            "Cliente",
+            "Teléfono",
+            "Visitas",
+            "Cantidad servicios día",
+            "Servicios del día",
+            "Sucursales",
+            "Total $ día",
+        ]
+    )
+
+    for row in filas:
+        tel = row["telefono"]
+        writer.writerow(
+            [
+                row["fecha"].strftime("%d/%m/%Y"),
+                row["nombre"],
+                tel,
+                visitas_por_tel.get(tel, row["cantidad_dia"]) if tel else row["cantidad_dia"],
+                row["cantidad_dia"],
+                " | ".join(row["servicios"]),
+                " / ".join(sorted(row["sucursales"])),
+                row["total_dia"],
+            ]
+        )
+
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv; charset=utf-8",
+        headers={"Content-Disposition": "attachment; filename=resumen_cliente_dia.csv"},
     )
 
 
