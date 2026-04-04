@@ -21,4 +21,4 @@ Este proyecto aplica conceptos fundamentales de mi formación:
 3. **Automatización:** Reducción de carga operativa mediante scripts de limpieza.
 
 ---
-Desarrollado por [Jose Manuel](https://josemanuelweb.github.io/mi-portafolio/) - Estudiante de Ciencia de Datos e IA.
+Desarrollado por [Jose Manuel](https://JoseManuel-TI.github.io/mi-portafolio/) - Estudiante de Ciencia de Datos e IA.
